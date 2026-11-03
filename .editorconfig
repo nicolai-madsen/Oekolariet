@@ -11,7 +11,6 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-# Markdown: trailing spaces kan betyde linjeskift, så dem rører vi ikke
 [*.md]
 trim_trailing_whitespace = false
 
@@ -33,7 +32,6 @@ end_of_line = crlf
 [*.{cs,razor}]
 
 # ---------- Namespaces og usings ----------
-# File-scoped namespace: "namespace BookMyHome.Domain;" i stedet for { }-blok
 csharp_style_namespace_declarations = file_scoped:warning
 # Namespace skal matche mappestrukturen (IDE0130)
 dotnet_style_namespace_match_folder = true:suggestion
@@ -68,7 +66,7 @@ csharp_prefer_static_local_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 
 # ---------- Klammer og blokke ----------
-# Altid { } — også ved one-liner if. Forhindrer klassiske bugs.
+# Altid { } — også ved one-liner if. Forhindrer klassiske bugs.!! ATTENTTION!!
 csharp_prefer_braces = true:warning
 csharp_style_prefer_primary_constructors = true:suggestion
 csharp_prefer_simple_using_statement = true:suggestion
@@ -130,7 +128,6 @@ csharp_preserve_single_line_blocks = true
 ###############################################################################
 # Navngivning
 ###############################################################################
-# Rækkefølgen af regler betyder noget: den mest specifikke vinder.
 
 # --- Symbolgrupper ---
 dotnet_naming_symbols.interfaces.applicable_kinds = interface
@@ -221,7 +218,7 @@ dotnet_naming_rule.locals_camel.style = camel_case
 dotnet_naming_rule.locals_camel.severity = warning
 
 ###############################################################################
-# Analyzers (CA-regler) — de vigtigste for et web-API
+# Analyzers (CA-regler)
 ###############################################################################
 [*.cs]
 dotnet_diagnostic.CA2016.severity = warning    # send CancellationToken videre
@@ -232,17 +229,17 @@ dotnet_diagnostic.CA1305.severity = none       # IFormatProvider-støj
 dotnet_diagnostic.CA2254.severity = warning    # brug log-templates, ikke $"..." i logging
 
 ###############################################################################
-# Tests — lidt løsere regler
+# Tests
 ###############################################################################
 [tests/**.cs]
-# Test-navne som AddBooking_WhenOverlapping_Throws er helt fine
+# Test-navne som AddBooking_WhenOverlapping_Throws er ok
 dotnet_diagnostic.CA1707.severity = none
 # xUnit test-metoder hedder ikke ...Async af konvention
 dotnet_naming_rule.async_methods_suffix.severity = none
 dotnet_diagnostic.CA2016.severity = suggestion
 
 ###############################################################################
-# Genereret kode — rør den ikke
+# Genereret kode - DNFT
 ###############################################################################
 [**/Migrations/*.cs]
 generated_code = true
