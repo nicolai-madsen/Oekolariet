@@ -1,0 +1,845 @@
+openapi: 3.1.0
+info:
+  title: Økolariet API
+  version: 0.1.0
+  description: |
+    API for Økolariet. Consists of two clients:
+    - **GuestClient** (touch screen in the exhibition, anonymous): reads the active version, plays games, shows statistics.
+    - **CMS** (staff, JWT with role `Editor`): edits drafts and publishes versions.
+
+    Conventions: JSON, camelCase, UTF-8. IDs are GUIDs. Timestamps are ISO 8601 in UTC.
+    Enums are sent as strings. Errors are ProblemDetails (RFC 9457) as `application/problem+json`.
+servers:
+  - url: /api/v1
+
+# Deny access as default: every operation requires a JWT unless it overrides with `security: []`.
+# This is to mirrors the fallback policy + [AllowAnonymous] in ASP.NET Core.
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+  - name: guest
+    description: Anonymous endpoints used by guests on the touch screen
+  - name: exhibitions
+  - name: draft
+  - name: versions
+  - name: media
+  - name: games
+  - name: statistics
+
+paths:
+  #  ///////////////
+  # /////AUTH/////
+  #/////////////
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Log in and receive a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  #  //////////////
+  # ////GUEST/////
+  #//////////////
+  /exhibitions/{exhibitionId}/active-version:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    get:
+      tags: [guest, exhibitions]
+      operationId: getActiveVersion
+      summary: Get the active published version (without correct answers)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: The active version
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveVersionDto" }
+        "304":
+          description: The client already has the newest active version
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /games:
+    post:
+      tags: [guest, games]
+      operationId: startGame
+      summary: Start a game. The server binds it to the exhibition's active version.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartGameRequest" }
+      responses:
+        "201":
+          description: Game started
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameDto" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /games/{gameId}/answers:
+    parameters:
+      - $ref: "#/components/parameters/GameId"
+    post:
+      tags: [guest, games]
+      operationId: answerItem
+      summary: Answer one item. The server validates it (ADR-003).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnswerRequest" }
+      responses:
+        "200":
+          description: Answer validated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnswerResultDto" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /games/{gameId}/result:
+    parameters:
+      - $ref: "#/components/parameters/GameId"
+    get:
+      tags: [guest, games]
+      operationId: getGameResult
+      summary: Get the result once every item is answered
+      security: []
+      responses:
+        "200":
+          description: Game result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameResultDto" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /statistics/exhibitions/{exhibitionId}:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    get:
+      tags: [guest, statistics]
+      operationId: getExhibitionStatistics
+      summary: Aggregate statistics for guests
+      security: []
+      parameters:
+        - name: scope
+          in: query
+          required: false
+          description: "`active` = only the active version (default). `all` = across all versions."
+          schema:
+            type: string
+            enum: [active, all]
+            default: active
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatisticsDto" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  #  //////////////
+  # ////MEDIA/////
+  #//////////////
+  /media:
+    post:
+      tags: [media]
+      operationId: uploadMedia
+      summary: Upload an image (PNG, JPEG or WebP, max 5 MB)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  contentMediaType: application/octet-stream
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/webp
+      responses:
+        "201":
+          description: Uploaded
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaDto" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "415": { $ref: "#/components/responses/UnsupportedMediaType" }
+
+  /media/{mediaId}:
+    parameters:
+      - name: mediaId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [guest, media]
+      operationId: getMedia
+      summary: The image file itself
+      security: []
+      responses:
+        "200":
+          description: Image file
+          headers:
+            Cache-Control:
+              description: "public, max-age=31536000, immutable"
+              schema: { type: string }
+          content:
+            image/png: { schema: { type: string, contentMediaType: image/png } }
+            image/jpeg: { schema: { type: string, contentMediaType: image/jpeg } }
+            image/webp: { schema: { type: string, contentMediaType: image/webp } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  #  ////////////////////////////////
+  # ////CMS: EXHIBITIONS (CRUD)/////
+  #////////////////////////////////
+  /exhibitions:
+    get:
+      tags: [exhibitions]
+      operationId: listExhibitions
+      summary: List exhibitions (archived ones excluded)
+      responses:
+        "200":
+          description: Exhibitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExhibitionSummaryDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [exhibitions]
+      operationId: createExhibition
+      summary: Create an exhibition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExhibitionNameRequest" }
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExhibitionDto" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /exhibitions/{exhibitionId}:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    get:
+      tags: [exhibitions]
+      operationId: getExhibition
+      summary: Get one exhibition
+      responses:
+        "200":
+          description: Exhibition
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExhibitionDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [exhibitions]
+      operationId: renameExhibition
+      summary: Rename an exhibition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExhibitionNameRequest" }
+      responses:
+        "204": { description: Renamed }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [exhibitions]
+      operationId: archiveExhibition
+      summary: Archive (soft delete). Versions and scores still reference it.
+      responses:
+        "204": { description: Archived }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    #  ///////////////////
+    # ////CMS: DRAFT/////
+    #///////////////////
+  /exhibitions/{exhibitionId}/draft:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    get:
+      tags: [draft]
+      operationId: getDraft
+      summary: Get the draft (includes correct answers)
+      responses:
+        "200":
+          description: Draft
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DraftDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [draft]
+      operationId: createDraft
+      summary: Create a draft as a copy of the active version (empty if none exists)
+      responses:
+        "201":
+          description: Draft created
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DraftDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    put:
+      tags: [draft]
+      operationId: replaceDraft
+      summary: Replace the whole draft atomically
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DraftDto" }
+      responses:
+        "200":
+          description: Saved
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DraftDto" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+    delete:
+      tags: [draft]
+      operationId: discardDraft
+      summary: Discard the draft
+      responses:
+        "204": { description: Discarded }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /exhibitions/{exhibitionId}/draft/publish:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    post:
+      tags: [draft]
+      operationId: publishDraft
+      summary: Publish. The draft becomes a new immutable version and replaces the active one.
+      description: Deliberate action endpoint, because publishing is a state transition (Richardson level 2 compromise).
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "201":
+          description: Published
+          headers:
+            Location:
+              description: /api/v1/exhibitions/{exhibitionId}/versions/{versionId}
+              schema: { type: string, format: uri-reference }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VersionSummaryDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableContent" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+
+  # ───────────────────────── CMS: VERSIONS (read-only) ─────────────────────────
+  #  //////////////////////////////////
+  # ////CMS: VERSIONS (read-only)/////
+  #//////////////////////////////////
+  
+  /exhibitions/{exhibitionId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+    get:
+      tags: [versions]
+      operationId: listVersions
+      summary: Version history
+      responses:
+        "200":
+          description: Versions, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/VersionSummaryDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /exhibitions/{exhibitionId}/versions/{versionId}:
+    parameters:
+      - $ref: "#/components/parameters/ExhibitionId"
+      - name: versionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [versions]
+      operationId: getVersion
+      summary: One version, including correct answers
+      responses:
+        "200":
+          description: Version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VersionDto" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT with role `Editor`. Lifetime 8 hours, no refresh tokens in v1.
+
+  parameters:
+    ExhibitionId:
+      name: exhibitionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: ETag from the latest GET/PUT of the draft (RowVersion as base64). Missing → 428.
+      schema: { type: string, example: '"AAAAAAAAB9E="' }
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      schema: { type: string }
+
+  headers:
+    ETag:
+      description: Entity tag (RowVersion as base64, in quotes)
+      schema: { type: string, example: '"AAAAAAAAB9E="' }
+    Location:
+      description: URL of the created resource
+      schema: { type: string, format: uri-reference }
+
+  responses:
+    ValidationError:
+      description: Validation error, with errors per field
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ValidationProblemDetails" }
+    Unauthorized:
+      description: Token missing or invalid
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Forbidden:
+      description: Valid token, wrong role
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    NotFound:
+      description: Resource does not exist
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Conflict:
+      description: Current state prevents the action (already answered, game not finished, draft exists)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    PreconditionFailed:
+      description: If-Match does not match, so someone else saved the draft in the meantime
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+          example:
+            type: https://okolariet.example/problems/draft-conflict
+            title: Kladden er ændret af en anden
+            status: 412
+            detail: Hent kladden igen, og læg dine ændringer ind på ny.
+            instance: /api/v1/exhibitions/9b1d4c1e-0000-0000-0000-000000000000/draft
+    PreconditionRequired:
+      description: If-Match header is missing
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    PayloadTooLarge:
+      description: Upload exceeds 5 MB
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    UnsupportedMediaType:
+      description: File type is not PNG, JPEG or WebP
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    UnprocessableContent:
+      description: Draft is valid JSON but cannot be published (e.g. a game without items)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ValidationProblemDetails" }
+    TooManyRequests:
+      description: Rate limit hit
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  schemas:
+    #  /////////////
+    # ///ERRORS////
+    #/////////////
+    ProblemDetails:
+      type: object
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+      additionalProperties: true
+    ValidationProblemDetails:
+      allOf:
+        - $ref: "#/components/schemas/ProblemDetails"
+        - type: object
+          properties:
+            errors:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+              example:
+                name: ["Name is required."]
+
+    #  /////////////
+    # ///AUTH//////
+    #/////////////
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 1 }
+    LoginResponse:
+      type: object
+      required: [accessToken, expiresAt]
+      properties:
+        accessToken: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    #  ////////////////////
+    # ///EXHIBITIONS//////
+    #////////////////////
+    ExhibitionNameRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+    ExhibitionSummaryDto:
+      type: object
+      required: [id, name, hasDraft]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        activeVersionNumber: { type: [integer, "null"] }
+        hasDraft: { type: boolean }
+    ExhibitionDto:
+      type: object
+      required: [id, name, createdAt, hasDraft]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+        activeVersionId: { type: [string, "null"], format: uuid }
+        activeVersionNumber: { type: [integer, "null"] }
+        hasDraft: { type: boolean }
+
+    #  ///////////////////////
+    # ///SHARED CONTENT//////
+    #///////////////////////
+    Theme:
+      type: object
+      required: [primaryColor, secondaryColor, fontFamily]
+      properties:
+        primaryColor: { type: string, pattern: "^#[0-9A-Fa-f]{6}$", examples: ["#2E7D32"] }
+        secondaryColor: { type: string, pattern: "^#[0-9A-Fa-f]{6}$", examples: ["#A5D6A7"] }
+        fontFamily: { type: string, minLength: 1, maxLength: 50, examples: [K2D] }
+        logoMediaId: { type: [string, "null"], format: uuid }
+        backgroundMediaId: { type: [string, "null"], format: uuid }
+    PageLayout:
+      type: string
+      enum: [ImageLeft, ImageRight, TextOnly, ImageOnly]
+    Page:
+      type: object
+      required: [id, order, layout, title, body]
+      properties:
+        id: { type: string, format: uuid }
+        order: { type: integer, minimum: 1 }
+        layout: { $ref: "#/components/schemas/PageLayout" }
+        title: { type: string, minLength: 1, maxLength: 75 }
+        body: { type: string, maxLength: 2000 }
+        mediaId: { type: [string, "null"], format: uuid }
+    GameType:
+      type: string
+      enum: [Sorting]
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 50 }
+        mediaId: { type: [string, "null"], format: uuid }
+
+    #  //////////////////////////////
+    # ///GUEST: ACTIVE VERSION//////
+    #//////////////////////////////
+    ActiveVersionDto:
+      type: object
+      required: [exhibitionId, versionId, versionNumber, publishedAt, theme, pages, game]
+      properties:
+        exhibitionId: { type: string, format: uuid }
+        versionId: { type: string, format: uuid }
+        versionNumber: { type: integer, minimum: 1 }
+        publishedAt: { type: string, format: date-time }
+        theme: { $ref: "#/components/schemas/Theme" }
+        pages:
+          type: array
+          items: { $ref: "#/components/schemas/Page" }
+        game: { $ref: "#/components/schemas/GameInfo" }
+    GameInfo:
+      description: Polymorphic on `type`. New game types are added as new subtypes (open/closed).
+      oneOf:
+        - $ref: "#/components/schemas/SortingGameInfo"
+      discriminator:
+        propertyName: type
+        mapping:
+          Sorting: "#/components/schemas/SortingGameInfo"
+    SortingGameInfo:
+      type: object
+      required: [type, title, intro]
+      properties:
+        type: { const: Sorting }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        intro: { type: string, maxLength: 200 }
+
+    #  ////////////////////
+    # ///GUEST: GAME//////
+    #////////////////////
+    StartGameRequest:
+      type: object
+      required: [exhibitionId]
+      properties:
+        exhibitionId: { type: string, format: uuid }
+    GameDto:
+      oneOf:
+        - $ref: "#/components/schemas/SortingGameDto"
+      discriminator:
+        propertyName: type
+        mapping:
+          Sorting: "#/components/schemas/SortingGameDto"
+    SortingGameDto:
+      type: object
+      required: [gameId, versionId, type, categories, items]
+      properties:
+        gameId: { type: string, format: uuid }
+        versionId: { type: string, format: uuid }
+        type: { const: Sorting }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Category" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GuestItem" }
+    GuestItem:
+      description: An item as the guest sees it. Deliberately has NO correctCategoryId (ADR-003).
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        mediaId: { type: [string, "null"], format: uuid }
+    AnswerRequest:
+      type: object
+      required: [itemId, categoryId]
+      properties:
+        itemId: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+    AnswerResultDto:
+      type: object
+      required: [isCorrect, correctCategoryId, answeredCount, totalCount, isGameCompleted]
+      properties:
+        isCorrect: { type: boolean }
+        correctCategoryId: { type: string, format: uuid }
+        explanation: { type: [string, "null"] }
+        answeredCount: { type: integer, minimum: 0, examples: [4] }
+        totalCount: { type: integer, minimum: 1, examples: [10] }
+        isGameCompleted: { type: boolean }
+    GameResultDto:
+      type: object
+      required: [gameId, correctCount, totalCount, scorePercent, averageScorePercent, betterThanPercent]
+      properties:
+        gameId: { type: string, format: uuid }
+        correctCount: { type: integer, minimum: 0, examples: [7] }
+        totalCount: { type: integer, minimum: 1, examples: [10] }
+        scorePercent: { type: number, minimum: 0, maximum: 100, examples: [70] }
+        averageScorePercent: { type: number, minimum: 0, maximum: 100, examples: [64.2] }
+        betterThanPercent: { type: number, minimum: 0, maximum: 100, examples: [58] }
+    StatisticsDto:
+      type: object
+      required: [exhibitionId, gamesCompleted, averageScorePercent, bestScorePercent]
+      properties:
+        exhibitionId: { type: string, format: uuid }
+        gamesCompleted: { type: integer, minimum: 0, examples: [1834] }
+        averageScorePercent: { type: number, minimum: 0, maximum: 100 }
+        bestScorePercent: { type: number, minimum: 0, maximum: 100 }
+
+    # ─── CMS: draft & versions (WITH correct answers) ───
+    DraftDto:
+      type: object
+      required: [theme, pages, game]
+      properties:
+        exhibitionId: { type: string, format: uuid, readOnly: true }
+        basedOnVersionId: { type: [string, "null"], format: uuid, readOnly: true }
+        updatedAt: { type: string, format: date-time, readOnly: true }
+        updatedBy: { type: string, readOnly: true }
+        theme: { $ref: "#/components/schemas/Theme" }
+        pages:
+          type: array
+          items: { $ref: "#/components/schemas/Page" }
+        game: { $ref: "#/components/schemas/EditorGame" }
+    EditorGame:
+      oneOf:
+        - $ref: "#/components/schemas/SortingEditorGame"
+      discriminator:
+        propertyName: type
+        mapping:
+          Sorting: "#/components/schemas/SortingEditorGame"
+    SortingEditorGame:
+      type: object
+      required: [type, title, intro, categories, items]
+      properties:
+        type: { const: Sorting }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        intro: { type: string, maxLength: 200 }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Category" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/EditorItem" }
+    EditorItem:
+      type: object
+      required: [id, name, correctCategoryId]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        mediaId: { type: [string, "null"], format: uuid }
+        correctCategoryId: { type: string, format: uuid }
+        explanation: { type: [string, "null"], maxLength: 250 }
+    VersionSummaryDto:
+      type: object
+      required: [versionId, versionNumber, publishedAt, publishedBy, isActive]
+      properties:
+        versionId: { type: string, format: uuid }
+        versionNumber: { type: integer, minimum: 1 }
+        publishedAt: { type: string, format: date-time }
+        publishedBy: { type: string }
+        isActive: { type: boolean }
+    VersionDto:
+      type: object
+      required: [exhibitionId, versionId, versionNumber, publishedAt, publishedBy, theme, pages, game]
+      properties:
+        exhibitionId: { type: string, format: uuid }
+        versionId: { type: string, format: uuid }
+        versionNumber: { type: integer, minimum: 1 }
+        publishedAt: { type: string, format: date-time }
+        publishedBy: { type: string }
+        theme: { $ref: "#/components/schemas/Theme" }
+        pages:
+          type: array
+          items: { $ref: "#/components/schemas/Page" }
+        game: { $ref: "#/components/schemas/EditorGame" }
+
+    # ─── Media ───
+    MediaDto:
+      type: object
+      required: [id, contentType, sizeBytes, url]
+      properties:
+        id: { type: string, format: uuid }
+        contentType: { type: string, enum: [image/png, image/jpeg, image/webp] }
+        sizeBytes: { type: integer, maximum: 5242880 }
+        url: { type: string, format: uri-reference, examples: [/api/v1/media/71aa0000-0000-0000-0000-000000000000] }
