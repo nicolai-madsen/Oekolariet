@@ -1,1 +1,13 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Oekolariet.Api/Oekolariet.Api.csproj" />
+    <Project Path="src/Oekolariet.Application/Oekolariet.Application.csproj" />
+    <Project Path="src/Oekolariet.Domain/Oekolariet.Domain.csproj" />
+    <Project Path="src/Oekolariet.Infrastructure/Oekolariet.Infrastructure.csproj" />
+    <Project Path="src/Oekolariet.Shared/Oekolariet.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Oekolariet.Application.Tests/Oekolariet.Application.Tests.csproj" />
+    <Project Path="tests/Oekolariet.Domain.Tests/Oekolariet.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
