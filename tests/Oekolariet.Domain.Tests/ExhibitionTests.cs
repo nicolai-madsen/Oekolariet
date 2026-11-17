@@ -9,7 +9,7 @@ public class ExhibitionTests
 
     // Our glorious Object Mother: Valid content for the tests
     private static ExhibitionContent CreateContent() => new(
-        new Theme("#2E7D32", "#A5D6A7", "K2D", null, null),
+        new Theme("#ffffff", "#A5D6A7", "K2D", null, null),
         [new Page(Guid.NewGuid(), 1, PageLayout.TextOnly, "Velkommen!", "Jeg hedder Otto Odder", null)]);
 
     private static Exhibition CreateExhibition() => Exhibition.Create(Guid.NewGuid(), "TestExhibition", CreatedAt);

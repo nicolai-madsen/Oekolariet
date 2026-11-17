@@ -11,9 +11,9 @@ public sealed class ExhibitionVersion
     public string PublishedBy { get; private set; } = string.Empty;
     public ExhibitionContent Content { get; private set; } = null!;
 
-    private ExhibitionVersion() { } // Kun til EF Core
+    private ExhibitionVersion() { } // Only for EF Core
 
-    // internal: kun Exhibition.Publish må lave versioner
+    // internal: Only Exhibition.Publish can create new valid versions
     internal static ExhibitionVersion Create(
         Guid exhibitionId, int versionNumber, ExhibitionContent content, string publishedBy, DateTime publishedAtUtc)
     {

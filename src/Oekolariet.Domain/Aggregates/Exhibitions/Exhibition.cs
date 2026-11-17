@@ -12,7 +12,7 @@ public sealed class Exhibition
     public Guid? ActiveVersionId { get; private set; }
     public int LatestVersionNumber { get; private set; }
 
-    private Exhibition() { } // Kun til EF Core
+    private Exhibition() { } // Only for EF Core
 
     public static Exhibition Create(Guid id, string name, DateTime createdAtUtc)
     {
