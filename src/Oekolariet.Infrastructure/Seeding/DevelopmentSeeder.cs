@@ -26,7 +26,7 @@ internal static class DevelopmentSeeder
                     Order: 1,
                     PageLayout.TextOnly,
                     Title: "Velkommen!",
-                    Body: "Hej! Jeg hedder Otto Odder. Kom med mig rundt i udstillingen og lær, hvordan affald kan blive til nye ting.",
+                    Body: "Hej! Jeg hedder Otto Odder. Følg med og lær om noget skrald, dude.",
                     MediaId: null),
             ]);
 

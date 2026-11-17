@@ -1,7 +1,50 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.Extensions.Configuration
+@using Oekolariet.Shared.Exhibitions
+@inject HttpClient Http
+@inject IConfiguration Configuration
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Økolariet</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_version is null)
+{
+    <p>Henter udstillingen …</p>
+}
+else
+{
+    <main style="--primary: @_version.Theme.PrimaryColor; --secondary: @_version.Theme.SecondaryColor;">
+        @foreach (var contentPage in _version.Pages)
+        {
+            <section class="content-page">
+                <h1>@contentPage.Title</h1>
+                <p>@contentPage.Body</p>
+            </section>
+        }
 
-Welcome to your new app.
+        <footer>Version @_version.VersionNumber</footer>
+    </main>
+}
+
+@code {
+    private ActiveVersionDto? _version;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var exhibitionId = Configuration["ExhibitionId"];
+
+        try
+        {
+            _version = await Http.GetFromJsonAsync<ActiveVersionDto>(
+                $"api/v1/exhibitions/{exhibitionId}/active-version");
+        }
+        catch (HttpRequestException ex)
+        {
+            _error = $"Kunne ikke hente udstillingen ({ex.StatusCode}).";
+        }
+    }
+}
