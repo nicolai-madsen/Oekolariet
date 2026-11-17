@@ -1,6 +1,10 @@
-@Oekolariet.Api_HostAddress = http://localhost:5026
+@Oekolariet.Api_HostAddress = https://localhost:7137
+@exhibitionId = 9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001
 
-GET {{Oekolariet.Api_HostAddress}}/weatherforecast/
+### Aktiv version (seedet)
+GET {{Oekolariet.Api_HostAddress}}/api/v1/exhibitions/{{exhibitionId}}/active-version
 Accept: application/json
 
-###
+### Ukendt udstilling -> 404
+GET {{Oekolariet.Api_HostAddress}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
+Accept: application/json

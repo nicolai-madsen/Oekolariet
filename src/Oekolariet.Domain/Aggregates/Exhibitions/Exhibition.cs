@@ -1,3 +1,6 @@
+using Oekolariet.Domain.Aggregates.ExhibitionVersions;
+using Oekolariet.Domain.Content;
+
 namespace Oekolariet.Domain.Aggregates.Exhibitions;
 
 public sealed class Exhibition
@@ -7,11 +10,17 @@ public sealed class Exhibition
     public DateTime CreatedAt { get; private set; }
     public bool IsArchived { get; private set; }
     public Guid? ActiveVersionId { get; private set; }
+    public int LatestVersionNumber { get; private set; }
 
-    private Exhibition() { }
+    private Exhibition() { } // Only for EF Core
 
-    public static Exhibition Create(string name, DateTime createdAtUtc)
+    public static Exhibition Create(Guid id, string name, DateTime createdAtUtc)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("Id må ikke være tomt.", nameof(id));
+        }
+
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("Navn er påkrævet.", nameof(name));
@@ -19,9 +28,22 @@ public sealed class Exhibition
 
         return new Exhibition
         {
-            Id = Guid.NewGuid(),
+            Id = id,
             Name = name.Trim(),
-            CreatedAt = createdAtUtc
+            CreatedAt = createdAtUtc,
         };
+    }
+
+    public ExhibitionVersion Publish(ExhibitionContent content, string publishedBy, DateTime publishedAtUtc)
+    {
+        if (IsArchived)
+        {
+            throw new InvalidOperationException("En arkiveret udstilling kan ikke udgives.");
+        }
+
+        LatestVersionNumber++;
+        var version = ExhibitionVersion.Create(Id, LatestVersionNumber, content, publishedBy, publishedAtUtc);
+        ActiveVersionId = version.Id;
+        return version;
     }
 }
