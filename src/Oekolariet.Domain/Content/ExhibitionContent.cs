@@ -10,10 +10,10 @@ public sealed record Theme(
     Guid? BackgroundMediaId);
 
 public sealed record Page(
-    Guid id,
+    Guid Id,
     int Order,
     PageLayout Layout,
-    string title,
+    string Title,
     string Body,
     Guid? MediaId);
 
