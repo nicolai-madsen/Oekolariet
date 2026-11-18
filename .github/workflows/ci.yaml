@@ -1,0 +1,46 @@
+name: CI
+
+# Hvornår kører den? Ved push og PR til main/development
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+# Ny push på samme branch stopper den gamle kørsel
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest   # en ny Linux-maskine fra GitHub
+
+    steps:
+      # Hent koden fra repoet
+      - uses: actions/checkout@v4
+
+      # Installer .NET 10
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Hent NuGet-pakker
+      - name: Restore
+        run: dotnet restore
+
+      # Byg i Release (samme som det, der deployes)
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Kør tests og gem resultaterne som .trx-filer
+      - name: Test
+        run: dotnet test --no-build --configuration Release --logger trx --results-directory TestResults
+
+      # Upload testresultater, også når testene fejler
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
