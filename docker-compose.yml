@@ -27,10 +27,26 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       # Overskriver ConnectionStrings:Oekolariet i appsettings
       ConnectionStrings__Oekolariet: "Server=db;Database=Oekolariet;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      # CORS: allow the GuestClient (browser on localhost:5000) to call the API
+      Cors__AllowedOrigins__0: "http://localhost:5000"
     ports:
       - "8080:8080" # PC:container
     depends_on:
       db:
         condition: service_healthy
+
+  # GuestClient (Blazor WASM), built from its Dockerfile and served by nginx
+  guestclient:
+    build:
+      context: .
+      dockerfile: src/Oekolariet.GuestClient/Dockerfile
+    # Restart the container if it crashes
+    restart: on-failure
+    ports:
+      - "5000:80" # PC:container (nginx listens on 80)
+    # Start the API first (the app calls it from the browser)
+    depends_on:
+      - api
+
 volumes:
   dbdata:
