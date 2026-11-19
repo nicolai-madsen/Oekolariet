@@ -7,6 +7,8 @@ services:
       MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
     ports:
       - "1433:1433"
+    volumes:
+      - dbdata:/var/opt/mssql
     # Venter, til SQL Server svarer, før api starter
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
@@ -19,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: src/Oekolariet.Api/Dockerfile
+    restart: on-failure
     environment:
       # Development: kører migrationer og seed ved opstart
       ASPNETCORE_ENVIRONMENT: Development
@@ -29,3 +32,5 @@ services:
     depends_on:
       db:
         condition: service_healthy
+volumes:
+  dbdata:
