@@ -1,0 +1,108 @@
+@page "/sorting-game-prototype"
+@using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<PageTitle>Sortér affaldet</PageTitle>
+
+<RadzenStack Gap="1rem" Style="max-width: 40rem;">
+	<h1>Sortér affaldet</h1>
+	<p>Træk avisen hen til den rigtige beholder.</p>
+
+	@* JavaScript moves this element as soon as the finger moves. *@
+	<div @ref="newspaperElement"
+		 hidden="@isSorted"
+		 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
+		<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
+			📰 Avis
+		</RadzenCard>
+	</div>
+
+	@* Each bin has an English identifier and a Danish label. *@
+	<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+		<div data-bin="paper" style="@BinStyle">
+			<strong>Papir</strong>
+
+			@if (isSorted)
+			{
+				<RadzenCard Style="margin-top: 0.5rem;">📰 Avis</RadzenCard>
+			}
+		</div>
+
+		<div data-bin="glass" style="@BinStyle">
+			<strong>Glas</strong>
+		</div>
+	</RadzenStack>
+
+	<p role="status">@feedback</p>
+
+	<div>
+		<RadzenButton Text="Spil igen" Click="@ResetGame" />
+	</div>
+</RadzenStack>
+
+@code {
+	private const string BinStyle =
+		"flex: 1; min-height: 7rem; padding: 1rem; border: 2px dashed #52745c; border-radius: 0.5rem;";
+
+	private ElementReference newspaperElement;
+	private IJSObjectReference? dragModule;
+	private DotNetObjectReference<SortingGamePrototype>? componentReference;
+
+	private bool isSorted;
+	private string feedback = string.Empty;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		// The card must exist in the browser before we attach pointer events.
+		if (firstRender)
+		{
+			dragModule = await JS.InvokeAsync<IJSObjectReference>(
+				"import", "./sortingGame.js");
+
+			componentReference = DotNetObjectReference.Create(this);
+
+			await dragModule.InvokeVoidAsync(
+				"enableImmediateDrag", newspaperElement, componentReference);
+		}
+	}
+
+	[JSInvokable]
+	public Task HandleBinDrop(string bin)
+	{
+		// JavaScript handles the movement. C# checks the player's answer.
+		switch (bin)
+		{
+			case "paper":
+				isSorted = true;
+				feedback = "Rigtigt! Avisen hører til i papir.";
+				break;
+
+			case "glass":
+				feedback = "Prøv igen. Hvilket materiale er avisen lavet af?";
+				break;
+		}
+
+		// A callback from JavaScript needs to request a UI update.
+		return InvokeAsync(StateHasChanged);
+	}
+
+	private void ResetGame()
+	{
+		isSorted = false;
+		feedback = string.Empty;
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		// Release the references when the player leaves the page.
+		componentReference?.Dispose();
+
+		if (dragModule is not null)
+		{
+			await dragModule.DisposeAsync();
+		}
+	}
+}
