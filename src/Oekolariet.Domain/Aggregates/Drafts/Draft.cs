@@ -10,6 +10,7 @@ public sealed class Draft
 
     public Draft() { }
 
+    // Static, because method creates a new object
     public static Draft Create(Guid exhibitionId, Guid? basedOnVersionId, ExhibitionContent content, string updatedBy, DateTime updatedAtUtc)
     {
         if (exhibitionId == Guid.Empty)
@@ -29,5 +30,20 @@ public sealed class Draft
             Content = content,
             UpdatedAt = updatedAtUtc
         };
+    }
+
+    // non static, because method replaces specific instance of an object
+    public void Replace(ExhibitionContent content, string updatedBy, DateTime updatedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        if (string.IsNullOrWhiteSpace(updatedBy))
+        {
+            throw new ArgumentException("UpdatedBy er påkrævet.", nameof(updatedBy));
+        }
+
+        Content = content;
+        UpdatedBy = updatedBy;
+        UpdatedAt = updatedAtUtc;
     }
 }
