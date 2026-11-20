@@ -1,5 +1,7 @@
 using Oekolariet.Domain.Content;
 
+namespace Oekolariet.Domain.Aggregates.Drafts;
+
 public sealed class Draft
 {
     public Guid ExhibitionId { get; private set; } // also PK, to limit to max 1 draft per exhibition
