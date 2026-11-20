@@ -1,4 +1,4 @@
-namespace Oekolariet.Application.Errors;
+namespace Oekolariet.Application.Common.Errors;
 
 public sealed class ConflictException : Exception
 {

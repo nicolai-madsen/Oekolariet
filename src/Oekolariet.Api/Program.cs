@@ -1,4 +1,5 @@
 using Oekolariet.Api.Endpoints;
+using Oekolariet.Application.Drafts;
 using Oekolariet.Application.Exhibitions;
 using Oekolariet.Infrastructure;
 
@@ -8,7 +9,10 @@ var connectionString = builder.Configuration.GetConnectionString("Oekolariet")
     ?? throw new InvalidOperationException("Connection string 'Oekolariet' mangler i appsettings.");
 
 builder.Services.AddInfrastructure(connectionString, seedDevelopmentData: builder.Environment.IsDevelopment());
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.AddScoped<GetActiveVersionHandler>();
+builder.Services.AddScoped<CreateDraftHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();

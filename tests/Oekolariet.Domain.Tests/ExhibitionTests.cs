@@ -1,5 +1,6 @@
 using Oekolariet.Domain.Aggregates.Exhibitions;
 using static Oekolariet.Domain.Tests.TestData;
+
 namespace Oekolariet.Domain.Tests;
 
 public class ExhibitionTests
