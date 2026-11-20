@@ -1,19 +1,9 @@
 using Oekolariet.Domain.Aggregates.Exhibitions;
-using Oekolariet.Domain.Content;
-
+using static Oekolariet.Domain.Tests.TestData;
 namespace Oekolariet.Domain.Tests;
 
 public class ExhibitionTests
 {
-    private static readonly DateTime CreatedAt = new(2026, 11, 17, 12, 0, 0, DateTimeKind.Utc);
-
-    // Our glorious Object Mother: Valid content for the tests
-    private static ExhibitionContent CreateContent() => new(
-        new Theme("#ffffff", "#A5D6A7", "K2D", null, null),
-        [new Page(Guid.NewGuid(), 1, PageLayout.TextOnly, "Velkommen!", "Jeg hedder Otto Odder", null)]);
-
-    private static Exhibition CreateExhibition() => Exhibition.Create(Guid.NewGuid(), "TestExhibition", CreatedAt);
-
     [Theory]
     [InlineData("   ")]
     [InlineData("")]
@@ -24,7 +14,7 @@ public class ExhibitionTests
         var id = Guid.NewGuid();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => Exhibition.Create(id, blankName!, CreatedAt));
+        Assert.Throws<ArgumentException>(() => Exhibition.Create(id, blankName!, CreatedAt)); // CreatedAt data comes from TestData class
     }
 
     [Fact]
@@ -52,7 +42,7 @@ public class ExhibitionTests
         var exhibition = CreateExhibition();
 
         // Act
-        var version = exhibition.Publish(CreateContent(), "test@example.com", CreatedAt);
+        var version = exhibition.Publish(TestData.CreateContent(), "test@example.com", CreatedAt);
 
         // Assert
         Assert.Equal(1, version.VersionNumber);
@@ -64,11 +54,11 @@ public class ExhibitionTests
     public void Publish_Twice_IncrementsVersionNumberAndMovesActivePointer()
     {
         // Arrange
-        var exhibition = CreateExhibition();
-        var first = exhibition.Publish(CreateContent(), "test@example.com", CreatedAt);
+        var exhibition = TestData.CreateExhibition();
+        var first = exhibition.Publish(TestData.CreateContent(), "test@example.com", CreatedAt);
 
         // Act
-        var second = exhibition.Publish(CreateContent(), "test@example.com", CreatedAt.AddHours(1));
+        var second = exhibition.Publish(TestData.CreateContent(), "test@example.com", CreatedAt.AddHours(1));
 
         // Assert
         Assert.Equal(2, second.VersionNumber);
