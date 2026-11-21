@@ -28,6 +28,7 @@ public sealed class Draft
             ExhibitionId = exhibitionId,
             BasedOnVersionId = basedOnVersionId,
             Content = content,
+            UpdatedBy = updatedBy,
             UpdatedAt = updatedAtUtc
         };
     }
