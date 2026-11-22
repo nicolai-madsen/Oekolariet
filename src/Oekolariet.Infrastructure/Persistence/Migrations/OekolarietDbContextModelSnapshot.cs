@@ -22,6 +22,32 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
+                {
+                    b.Property<Guid>("ExhibitionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BasedOnVersionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ContentJson");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("ExhibitionId");
+
+                    b.ToTable("Drafts", (string)null);
+                });
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.ExhibitionVersions.ExhibitionVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -79,6 +105,15 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Exhibitions", (string)null);
+                });
+
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
+                {
+                    b.HasOne("Oekolariet.Domain.Aggregates.Exhibitions.Exhibition", null)
+                        .WithOne()
+                        .HasForeignKey("Oekolariet.Domain.Aggregates.Drafts.Draft", "ExhibitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.ExhibitionVersions.ExhibitionVersion", b =>

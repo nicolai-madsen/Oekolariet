@@ -1,10 +1,19 @@
-@Oekolariet.Api_HostAddress = https://localhost:7137
+@baseUrl = http://localhost:8080
 @exhibitionId = 9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001
 
-### Aktiv version (seedet)
-GET {{Oekolariet.Api_HostAddress}}/api/v1/exhibitions/{{exhibitionId}}/active-version
+### Guest: active version -> 200
+GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/active-version
 Accept: application/json
 
-### Ukendt udstilling -> 404
-GET {{Oekolariet.Api_HostAddress}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
+### Unknown Exhibition -> 404
+GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
 Accept: application/json
+
+### CMS: create draft (expected: 201)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+
+### CMS: create draft again (expected: 409)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+
+### CMS: unknown exhibition (expected: 404)
+POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft

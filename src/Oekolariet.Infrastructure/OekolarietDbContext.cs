@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Oekolariet.Domain.Aggregates.Drafts;
 using Oekolariet.Domain.Aggregates.Exhibitions;
 using Oekolariet.Domain.Aggregates.ExhibitionVersions;
 using Oekolariet.Infrastructure.Converters;
@@ -9,6 +10,7 @@ public sealed class OekolarietDbContext(DbContextOptions<OekolarietDbContext> op
 {
     public DbSet<Exhibition> Exhibitions => Set<Exhibition>();
     public DbSet<ExhibitionVersion> ExhibitionVersions => Set<ExhibitionVersion>();
+    public DbSet<Draft> Drafts => Set<Draft>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

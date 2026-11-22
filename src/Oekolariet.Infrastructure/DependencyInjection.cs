@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Oekolariet.Application.Common;
+using Oekolariet.Application.Drafts;
 using Oekolariet.Application.Exhibitions;
 using Oekolariet.Infrastructure.Repositories;
 using Oekolariet.Infrastructure.Seeding;
@@ -24,6 +26,8 @@ public static class DependencyInjection
 
         services.AddScoped<IExhibitionRepository, ExhibitionRepository>();
         services.AddScoped<IExhibitionVersionRepository, ExhibitionVersionRepository>();
+        services.AddScoped<IDraftRepository, DraftRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }
