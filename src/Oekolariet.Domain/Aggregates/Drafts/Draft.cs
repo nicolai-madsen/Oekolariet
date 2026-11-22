@@ -10,7 +10,7 @@ public sealed class Draft
     public DateTime UpdatedAt { get; private set; }
     public string UpdatedBy { get; private set; } = string.Empty;
 
-    public Draft() { }
+    private Draft() { }
 
     // Static, because method creates a new object
     public static Draft Create(Guid exhibitionId, Guid? basedOnVersionId, ExhibitionContent content, string updatedBy, DateTime updatedAtUtc)
@@ -19,6 +19,8 @@ public sealed class Draft
         {
             throw new ArgumentException("ExhibitionId må ikke være tomt.", nameof(exhibitionId));
         }
+
+        ArgumentNullException.ThrowIfNull(content);
 
         if (string.IsNullOrWhiteSpace(updatedBy))
         {
