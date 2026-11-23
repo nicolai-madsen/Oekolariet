@@ -17,6 +17,10 @@ public sealed class OekolarietDbContext(DbContextOptions<OekolarietDbContext> op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OekolarietDbContext).Assembly);
+        // SQL Server assigns each game a guest number, even when games start at the same time.
+        modelBuilder.HasSequence<int>("GuestNumbers")
+            .StartsAt(1)
+            .IncrementsBy(1);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

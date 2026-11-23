@@ -22,6 +22,8 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("GuestNumbers");
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
                 {
                     b.Property<Guid>("ExhibitionId")
