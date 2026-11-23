@@ -3,6 +3,7 @@ using Oekolariet.Api.ErrorHandling;
 using Oekolariet.Application.Drafts;
 using Oekolariet.Application.Exhibitions;
 using Oekolariet.Infrastructure;
+using Oekolariet.Application.Games;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddScoped<GetActiveVersionHandler>();
 builder.Services.AddScoped<CreateDraftHandler>();
+builder.Services.AddScoped<StartGameHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
