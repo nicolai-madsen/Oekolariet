@@ -96,6 +96,6 @@ The PO and guests speaks Danish and the code speaks English. This table connects
 | Sorteringsspil | `SortingGame` | The game's content: categories and items |
 | Kategori | `Category` | Where an item can be placed, e.g. a bin |
 | Genstand | item | A thing the guest sorts |
-| Spil (et gennemspil) | `GameSession` | One guest's play-through, bound to one version |
+| Spil (et gennemspil) | `Game` | One guest's play-through, bound to one version |
 
 When a decision is made: Write the ADR, update this file in the same PR.
