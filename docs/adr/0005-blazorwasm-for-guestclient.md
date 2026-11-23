@@ -1,6 +1,6 @@
 # ADR-0005: Blazor WebAssembly for the GuestClient
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context

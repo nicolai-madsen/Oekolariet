@@ -1,6 +1,6 @@
 # ADR-0001: Generic content model (theme is data, mechanics are code)
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context

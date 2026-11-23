@@ -1,6 +1,6 @@
 # ADR-0003: The server validates answers and calculates the score
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context

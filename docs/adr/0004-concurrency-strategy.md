@@ -1,6 +1,6 @@
 # ADR-0004: Concurrency strategy
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context
