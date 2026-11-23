@@ -1,6 +1,6 @@
 # ADR-0006: Exhibition and ExhibitionVersion as seperate aggregates
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context
