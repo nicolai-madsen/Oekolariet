@@ -1,6 +1,6 @@
 # ADR-0002: Draft and Immutable published versions
 
-**Status:** Proposed
+**Status:** Accepted
 
 
 ## Context
