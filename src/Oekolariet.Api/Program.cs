@@ -41,5 +41,6 @@ app.UseCors();
 
 app.MapDraftEndpoints();
 app.MapGuestExhibitionEndpoints();
+app.MapGameEndpoints();
 
 await app.RunAsync();
