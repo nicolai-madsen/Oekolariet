@@ -8,13 +8,13 @@ namespace Oekolariet.Application.Games;
 public sealed class StartGameHandler(
     IExhibitionRepository exhibitions,
     IGameRepository games,
+    IGuestNumberGenerator guestNumbers,
     IUnitOfWork unitOfWork,
     TimeProvider clock)
 {
     public async Task<Guid> HandleAsync(
         Guid exhibitionId,
         string avatarKey,
-        int guestNumber,
         TimeSpan duration,
         CancellationToken ct)
     {
@@ -30,7 +30,9 @@ public sealed class StartGameHandler(
             throw new ConflictException("Spillet kan først startes, når udstillingen er udgivet.");
         }
 
-        // Keep this round tied to the version that was active at the start.
+        var guestNumber = await guestNumbers.NextAsync(ct);
+
+        // Use the same version for the entire round, even if a new one is published.
         var game = Game.Start(
             id: Guid.NewGuid(),
             versionId: versionId,

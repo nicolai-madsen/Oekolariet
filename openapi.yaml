@@ -705,6 +705,7 @@ components:
       required: [exhibitionId]
       properties:
         exhibitionId: { type: string, format: uuid }
+        avatarKey: { type: string, minLength: 1 }
     GameDto:
       oneOf:
         - $ref: "#/components/schemas/SortingGameDto"
