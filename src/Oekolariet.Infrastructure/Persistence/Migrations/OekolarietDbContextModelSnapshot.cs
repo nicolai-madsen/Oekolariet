@@ -22,6 +22,8 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("GuestNumbers");
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
                 {
                     b.Property<Guid>("ExhibitionId")
@@ -107,6 +109,37 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                     b.ToTable("Exhibitions", (string)null);
                 });
 
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Games.Game", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AvatarKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("GuestNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VersionId");
+
+                    b.ToTable("Games", (string)null);
+                });
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
                 {
                     b.HasOne("Oekolariet.Domain.Aggregates.Exhibitions.Exhibition", null)
@@ -121,6 +154,15 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                     b.HasOne("Oekolariet.Domain.Aggregates.Exhibitions.Exhibition", null)
                         .WithMany()
                         .HasForeignKey("ExhibitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Games.Game", b =>
+                {
+                    b.HasOne("Oekolariet.Domain.Aggregates.ExhibitionVersions.ExhibitionVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

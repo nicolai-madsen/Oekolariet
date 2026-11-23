@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Oekolariet.Application.Common;
 using Oekolariet.Application.Drafts;
 using Oekolariet.Application.Exhibitions;
+using Oekolariet.Application.Games;
+using Oekolariet.Infrastructure.Persistence;
 using Oekolariet.Infrastructure.Repositories;
 using Oekolariet.Infrastructure.Seeding;
+
 
 namespace Oekolariet.Infrastructure;
 
@@ -28,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<IExhibitionVersionRepository, ExhibitionVersionRepository>();
         services.AddScoped<IDraftRepository, DraftRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IGameRepository, GameRepository>();
+        services.AddScoped<IGuestNumberGenerator, GuestNumberGenerator>();
 
         return services;
     }
