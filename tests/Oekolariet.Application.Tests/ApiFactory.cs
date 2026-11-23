@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Oekolariet.Api.Tests;
 
-internal sealed class GameApiFactory(string containerConnectionString)
+internal sealed class ApiFactory(string containerConnectionString)
     : WebApplicationFactory<Program>
 {
     protected override IHost CreateHost(IHostBuilder builder)
