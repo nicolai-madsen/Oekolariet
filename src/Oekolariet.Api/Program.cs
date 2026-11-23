@@ -44,3 +44,5 @@ app.MapGuestExhibitionEndpoints();
 app.MapGameEndpoints();
 
 await app.RunAsync();
+
+public partial class Program { } // For integration testing
