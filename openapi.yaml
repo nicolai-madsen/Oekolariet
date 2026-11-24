@@ -94,8 +94,6 @@ paths:
       responses:
         "201":
           description: Game started
-          headers:
-            Location: { $ref: "#/components/headers/Location" }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/GameDto" }
@@ -410,7 +408,6 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableContent" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
 
-  # ───────────────────────── CMS: VERSIONS (read-only) ─────────────────────────
   #  //////////////////////////////////
   # ////CMS: VERSIONS (read-only)/////
   #//////////////////////////////////
@@ -702,10 +699,11 @@ components:
     #////////////////////
     StartGameRequest:
       type: object
-      required: [exhibitionId]
+      required: [exhibitionId, avatarKey]
       properties:
         exhibitionId: { type: string, format: uuid }
         avatarKey: { type: string, minLength: 1 }
+
     GameDto:
       oneOf:
         - $ref: "#/components/schemas/SortingGameDto"
@@ -713,6 +711,7 @@ components:
         propertyName: type
         mapping:
           Sorting: "#/components/schemas/SortingGameDto"
+
     SortingGameDto:
       type: object
       required: [gameId, versionId, type, categories, items]
@@ -726,6 +725,7 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/GuestItem" }
+
     GuestItem:
       description: An item as the guest sees it. Deliberately has NO correctCategoryId (ADR-003).
       type: object
@@ -734,12 +734,14 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         mediaId: { type: [string, "null"], format: uuid }
+
     AnswerRequest:
       type: object
       required: [itemId, categoryId]
       properties:
         itemId: { type: string, format: uuid }
         categoryId: { type: string, format: uuid }
+
     AnswerResultDto:
       type: object
       required: [isCorrect, correctCategoryId, answeredCount, totalCount, isGameCompleted]
@@ -750,6 +752,7 @@ components:
         answeredCount: { type: integer, minimum: 0, examples: [4] }
         totalCount: { type: integer, minimum: 1, examples: [10] }
         isGameCompleted: { type: boolean }
+
     GameResultDto:
       type: object
       required: [gameId, correctCount, totalCount, scorePercent, averageScorePercent, betterThanPercent]
@@ -760,6 +763,7 @@ components:
         scorePercent: { type: number, minimum: 0, maximum: 100, examples: [70] }
         averageScorePercent: { type: number, minimum: 0, maximum: 100, examples: [64.2] }
         betterThanPercent: { type: number, minimum: 0, maximum: 100, examples: [58] }
+
     StatisticsDto:
       type: object
       required: [exhibitionId, gamesCompleted, averageScorePercent, bestScorePercent]
@@ -783,6 +787,7 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Page" }
         game: { $ref: "#/components/schemas/EditorGame" }
+
     EditorGame:
       oneOf:
         - $ref: "#/components/schemas/SortingEditorGame"
@@ -790,6 +795,7 @@ components:
         propertyName: type
         mapping:
           Sorting: "#/components/schemas/SortingEditorGame"
+
     SortingEditorGame:
       type: object
       required: [type, title, intro, categories, items]
@@ -803,6 +809,7 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/EditorItem" }
+
     EditorItem:
       type: object
       required: [id, name, correctCategoryId]
@@ -812,6 +819,7 @@ components:
         mediaId: { type: [string, "null"], format: uuid }
         correctCategoryId: { type: string, format: uuid }
         explanation: { type: [string, "null"], maxLength: 250 }
+
     VersionSummaryDto:
       type: object
       required: [versionId, versionNumber, publishedAt, publishedBy, isActive]
@@ -821,6 +829,7 @@ components:
         publishedAt: { type: string, format: date-time }
         publishedBy: { type: string }
         isActive: { type: boolean }
+
     VersionDto:
       type: object
       required: [exhibitionId, versionId, versionNumber, publishedAt, publishedBy, theme, pages, game]
