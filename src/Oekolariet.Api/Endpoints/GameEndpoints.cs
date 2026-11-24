@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Oekolariet.Application.Games;
 using Oekolariet.Shared.Games;
 
@@ -16,21 +17,12 @@ internal static class GameEndpoints
         return builder;
     }
 
-    private static async Task<IResult> StartGameAsync(
+    private static async Task<Created<GameDto>> StartGameAsync(
         StartGameRequest request,
         StartGameHandler handler,
         CancellationToken ct)
     {
-        // Use 30 seconds until the CMS provides the duration.
-        var duration = TimeSpan.FromSeconds(30);
-
-        var gameId = await handler.HandleAsync(
-            request.ExhibitionId,
-            request.AvatarKey,
-            duration,
-            ct);
-
-        // TODO later: Return GameDto when the game is in ExhibitionContent
-        return TypedResults.Created((string?)null, new { gameId });
+        var dto = await handler.HandleAsync(request.ExhibitionId, request.AvatarKey, ct);
+        return TypedResults.Created((string?)null, dto);
     }
 }
