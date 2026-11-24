@@ -10,7 +10,8 @@ internal static class TestData
     // Our glorious Object Mother: Valid content for the tests
     public static ExhibitionContent CreateContent() => new(
         new Theme("#ffffff", "#A5D6A7", "K2D", null, null),
-        [new Page(Guid.NewGuid(), 1, PageLayout.TextOnly, "Velkommen!", "Jeg hedder Otto Odder", null)]);
+        [new Page(Guid.NewGuid(), 1, PageLayout.TextOnly, "Velkommen!", "Jeg hedder Otto Odder", null)],
+        SortingGame.Empty);
 
     public static Exhibition CreateExhibition() => Exhibition.Create(Guid.NewGuid(), "TestExhibition", CreatedAt);
 }

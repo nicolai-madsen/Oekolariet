@@ -18,6 +18,9 @@ internal static class DevelopmentSeeder
         var now = DateTime.UtcNow;
         var exhibition = Exhibition.Create(SeedIds.Exhibition, "Økolariet", now);
 
+        var pap = new Category(Guid.NewGuid(), "Pap", MediaId: null);
+        var plast = new Category(Guid.NewGuid(), "Plast", MediaId: null);
+
         var content = new ExhibitionContent(
             new Theme("#2E7D32", "#A5D6A7", "K2D", LogoMediaId: null, BackgroundMediaId: null),
             [
@@ -28,7 +31,18 @@ internal static class DevelopmentSeeder
                     Title: "Velkommen!",
                     Body: "Hej! Jeg hedder Otto Odder. Følg med og lær om noget skrald, dude.",
                     MediaId: null),
-            ]);
+            ],
+            new SortingGame(
+                Title: "Sorter affaldet",
+                Intro: "Træk tingene over i den rigtige spand",
+                DurationSeconds: 30,
+                Categories: [plast, pap],
+                Items:
+                [
+                    new SortingItem(Guid.NewGuid(), "Mælkekarton", MediaId: null, CorrectCategoryId: pap.Id, null),
+                    new SortingItem(Guid.NewGuid(), "Flaske", MediaId: null, CorrectCategoryId: plast.Id, null),
+                ]));
+
 
         // Går gennem domænet, så seed-data overholder samme regler som rigtige data.
         var version = exhibition.Publish(content, "seed@oekolariet.local", now);
