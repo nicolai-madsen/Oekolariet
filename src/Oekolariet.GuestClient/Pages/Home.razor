@@ -61,19 +61,18 @@ else
     // The first page from the API is the welcome text (title, body and optional picture).
     private PageDto? _welcome => _version?.Pages.OrderBy(p => p.Order).FirstOrDefault();
 
-    // Fixed in the client: the API has no url or image for the four areas.
     // Temporary: all papers use the same file until the coloured ones are ready.
     private readonly List<Area> _areas =
     [
-        new("Affaldshierarkiet", "/affaldshierarkiet", "images/green-postit.png", null, -1),
+        new("Affaldshierarkiet", "/affaldshierarkiet", "images/green-postit.png", "images/otto-walk.png", -1),
     new("Sorteringsquizzen", "/sorteringsquiz", "images/yellow-postit.png", null, 1),
     new("Materialernes rejse", "/materialerejser", "images/blue-postit.png", null, 1),
     new("RessourceCenter Vejles tilbud", "/ressourcecenter", "images/pink-postit.png", null, -1),
     ];
 
-    // Media from the API once GET /media/{id} exists. Falls back to local files.
+    // Media from the API once GET /media/{id} exists
     private string OttoImage =>
-        _welcome?.MediaId is { } id ? MediaUrl(id) : "images/otto-vink.png";
+        _welcome?.MediaId is { } id ? MediaUrl(id) : "images/otto-wave.png";
 
     private string BackgroundStyle =>
         _version?.Theme.BackgroundMediaId is { } id

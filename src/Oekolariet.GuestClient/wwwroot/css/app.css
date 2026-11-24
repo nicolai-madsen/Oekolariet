@@ -126,15 +126,33 @@ code {
 }
 
 .otto-bubble {
+  position: relative;
   padding: 1.5rem;
-  border-radius: 1.5rem;
+  border-radius: 0.5rem;
   max-height: 20rem;
-  overflow: auto;
+  overflow: visible;
+  z-index: 2;
+  margin-top: 2rem;
 }
+
+  .otto-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -20px;
+    left: 42%;
+    width: 32px;
+    height: 25px;
+    background: white;
+    border-radius: 3px 3px 8px 3px;
+    clip-path: polygon(0 0, 100% 0, 25% 100%);
+    transform: rotate(-8deg);
+    z-index: -1;
+  }
 
 .otto-img {
   width: 100%;
-  max-width: 14rem;
+  max-width: 17rem;
+  margin-top: 3rem;
 }
 
 .rz-link.note {
@@ -178,6 +196,15 @@ code {
 }
 
 .otto-img,
-.note-art {
+.note-art,
+.note-paper{
   filter: drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.35));
+}
+
+/*Placeholder background, delete later*/
+.home-bg {
+  background-image: url("/images/placeholderDELETE.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
