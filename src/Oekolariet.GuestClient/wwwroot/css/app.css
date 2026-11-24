@@ -100,3 +100,84 @@ code {
 .error {
   color: #b00020;
 }
+
+.home-bg {
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #b9b9b1;
+  background-size: cover;
+  background-position: center;
+  font-family: var(--font-family, "Segoe UI"), Arial, sans-serif;
+}
+
+.home-banner {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 2rem;
+  padding: 0.5rem 2rem;
+  background: #ffe53b;
+  color: #1b1b1b;
+  transform: rotate(-1deg);
+}
+
+.home-layout {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.otto-bubble {
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  max-height: 20rem;
+  overflow: auto;
+}
+
+.otto-img {
+  width: 100%;
+  max-width: 14rem;
+}
+
+.rz-link.note {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: #1b1b1b;
+  transform: rotate(var(--tilt, 0deg));
+  filter: drop-shadow(3px 6px 6px rgba(0, 0, 0, 0.35));
+}
+
+.note-paper {
+  display: block;
+  width: 100%;
+}
+
+.note-title {
+  position: absolute;
+  top: 22%;
+  left: 12%;
+  right: 12%;
+  margin: 0;
+  text-align: center;
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.note-art {
+  position: absolute;
+  left: 20%;
+  bottom: 14%;
+  width: 60%;
+  height: 40%;
+  object-fit: contain;
+}
+
+.home-bg .rz-text-h3,
+.home-bg .rz-text-h4,
+.home-bg .rz-text-body1 {
+  font-family: inherit;
+}
+
+.otto-img,
+.note-art {
+  filter: drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.35));
+}

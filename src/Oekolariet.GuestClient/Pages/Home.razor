@@ -16,22 +16,72 @@ else if (_version is null)
 }
 else
 {
-    <main style="--primary: @_version.Theme.PrimaryColor; --secondary: @_version.Theme.SecondaryColor;">
-        @foreach (var contentPage in _version.Pages)
-        {
-            <section class="content-page">
-                <h1>@contentPage.Title</h1>
-                <p>@contentPage.Body</p>
-            </section>
-        }
+    <main class="home-bg" style="@($"--font-family: {_version.Theme.FontFamily}; {BackgroundStyle}")">
+        <RadzenStack AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1" class="home-banner">
+                @(_welcome?.Title ?? "Økolariet")
+            </RadzenText>
+        </RadzenStack>
 
-        <footer>Version @_version.VersionNumber</footer>
+        <RadzenRow Gap="2rem" class="home-layout">
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenCard class="otto-bubble">
+                        <RadzenText TextStyle="TextStyle.Body1">@(_welcome?.Body ?? "")</RadzenText>
+                    </RadzenCard>
+                    <RadzenImage Path="@OttoImage" AlternateText="Otto Odder" class="otto-img" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="8">
+                <RadzenRow Gap="1.5rem" AlignItems="AlignItems.Start">
+                    @foreach (var area in _areas)
+                    {
+                        <RadzenColumn Size="6">
+                            <RadzenLink Path="@area.Url" class="note" Style="@($"--tilt: {area.Tilt}deg;")">
+                                <RadzenImage Path="@area.Paper" AlternateText="" class="note-paper" />
+                                <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H2" class="note-title">@area.Title</RadzenText>
+                                @if (area.Art is not null)
+                                {
+                                    <RadzenImage Path="@area.Art" AlternateText="" class="note-art" />
+                                }
+                            </RadzenLink>
+                        </RadzenColumn>
+                    }
+                </RadzenRow>
+            </RadzenColumn>
+        </RadzenRow>
     </main>
 }
 
 @code {
     private ActiveVersionDto? _version;
     private string? _error;
+
+    // The first page from the API is the welcome text (title, body and optional picture).
+    private PageDto? _welcome => _version?.Pages.OrderBy(p => p.Order).FirstOrDefault();
+
+    // Fixed in the client: the API has no url or image for the four areas.
+    // Temporary: all papers use the same file until the coloured ones are ready.
+    private readonly List<Area> _areas =
+    [
+        new("Affaldshierarkiet", "/affaldshierarkiet", "images/green-postit.png", null, -1),
+    new("Sorteringsquizzen", "/sorteringsquiz", "images/yellow-postit.png", null, 1),
+    new("Materialernes rejse", "/materialerejser", "images/blue-postit.png", null, 1),
+    new("RessourceCenter Vejles tilbud", "/ressourcecenter", "images/pink-postit.png", null, -1),
+    ];
+
+    // Media from the API once GET /media/{id} exists. Falls back to local files.
+    private string OttoImage =>
+        _welcome?.MediaId is { } id ? MediaUrl(id) : "images/otto-vink.png";
+
+    private string BackgroundStyle =>
+        _version?.Theme.BackgroundMediaId is { } id
+            ? $"background-image: url('{MediaUrl(id)}');"
+            : "";
+
+    private string MediaUrl(Guid id) =>
+        new Uri(Http.BaseAddress!, $"api/v1/media/{id}").ToString();
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,4 +97,7 @@ else
             _error = $"Kunne ikke hente udstillingen ({ex.StatusCode}).";
         }
     }
+
+    private sealed record Area(string Title, string Url, string Paper, string? Art, int Tilt);
+
 }
