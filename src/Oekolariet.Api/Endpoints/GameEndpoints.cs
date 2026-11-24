@@ -30,6 +30,7 @@ internal static class GameEndpoints
             duration,
             ct);
 
-        return TypedResults.Created($"/api/v1/games/{gameId}", new { gameId });
+        // TODO later: Return GameDto when the game is in ExhibitionContent
+        return TypedResults.Created((string?)null, new { gameId });
     }
 }
