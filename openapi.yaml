@@ -688,11 +688,12 @@ components:
           Sorting: "#/components/schemas/SortingGameInfo"
     SortingGameInfo:
       type: object
-      required: [type, title, intro]
+      required: [type, title, intro, durationSeconds]
       properties:
         type: { const: Sorting }
         title: { type: string, minLength: 1, maxLength: 100 }
         intro: { type: string, maxLength: 200 }
+        durationSeconds: { type: integer, minimum: 10, maximum: 600 }
 
     #  ////////////////////
     # ///GUEST: GAME//////
@@ -798,11 +799,12 @@ components:
 
     SortingEditorGame:
       type: object
-      required: [type, title, intro, categories, items]
+      required: [type, title, intro, durationSeconds, categories, items]
       properties:
         type: { const: Sorting }
         title: { type: string, minLength: 1, maxLength: 100 }
         intro: { type: string, maxLength: 200 }
+        durationSeconds: { type: integer, minimum: 10, maximum: 600, default: 30 }
         categories:
           type: array
           items: { $ref: "#/components/schemas/Category" }
