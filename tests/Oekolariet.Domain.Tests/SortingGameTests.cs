@@ -44,7 +44,7 @@ public class SortinGameTests
         // Arrange
         var game = CreateGame(
             new SortingItem(Guid.NewGuid(), "Mælkekarton", null, Pap.Id, null),
-            new SortingItem(Guid.NewGuid(), "Flaske", null, Plast.Id, null));
+            new SortingItem(Guid.NewGuid(), "Flaske", null, Guid.NewGuid(), null));
 
         // Act
         var errors = game.ValidateForPublish();
