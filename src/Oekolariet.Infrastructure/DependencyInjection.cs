@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IGameRepository, GameRepository>();
         services.AddScoped<IGuestNumberGenerator, GuestNumberGenerator>();
         services.AddScoped<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddScoped<IEditorRepository, EditorRepository>();
 
         return services;
     }
