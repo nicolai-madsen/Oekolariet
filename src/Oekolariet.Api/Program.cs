@@ -55,6 +55,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
+builder.Services.AddScoped<LoginHandler>();
 
 var app = builder.Build();
 
