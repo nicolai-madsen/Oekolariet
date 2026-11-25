@@ -7,6 +7,8 @@ using Oekolariet.Application.Games;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Oekolariet.Api.Auth;
+using Oekolariet.Application.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 
 var app = builder.Build();
 
