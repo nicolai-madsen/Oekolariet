@@ -76,6 +76,7 @@ app.UseAuthorization();
 app.MapDraftEndpoints();
 app.MapGuestExhibitionEndpoints();
 app.MapGameEndpoints();
+app.MapAuthEndpoints();
 
 await app.RunAsync();
 
