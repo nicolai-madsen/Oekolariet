@@ -1,28 +1,43 @@
 @baseUrl = http://localhost:8080
 @exhibitionId = 9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001
 
+
 ### Guest: active version -> 200
 GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/active-version
 Accept: application/json
+
 
 ### Unknown Exhibition -> 404
 GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
 Accept: application/json
 
+
 ### CMS: create draft (expected: 201)
 POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+
 
 ### CMS: create draft again (expected: 409)
 POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
 
+
 ### CMS: unknown exhibition (expected: 404)
 POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
+
 
 ### Guest: start game (expected: 201)
 POST {{baseUrl}}/api/v1/games
 Content-Type: application/json
-
 {
   "exhibitionId": "{{exhibitionId}}",
   "avatarKey": "odder"
 }
+
+
+### CMS: Get Draft (Expected: 200 AFTER create draft, otherwise 404)
+GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Accept: application/json
+
+
+### CMS: Get Draft, unknown exhibition (Expected: 404 ProblemDetails)
+GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
+Accept: application/json
