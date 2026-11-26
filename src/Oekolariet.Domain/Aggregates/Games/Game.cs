@@ -1,3 +1,5 @@
+using Oekolariet.Domain.Content;
+
 namespace Oekolariet.Domain.Aggregates.Games;
 
 public sealed class Game
@@ -9,6 +11,7 @@ public sealed class Game
     public DateTime StartedAt { get; private set; }
     public DateTime EndsAt { get; private set; }
     public int Score { get; private set; }
+    private const int PointsPerCorrectAnswer = 10;
 
     private Game() { } // Used by EF Core when loading a saved game.
 
@@ -58,4 +61,27 @@ public sealed class Game
     }
 
     public bool HasExpired(DateTime nowUtc) => nowUtc >= EndsAt;
+
+    // The caller loads the item from the exhibition version this game started with.
+    public bool SubmitAnswer(SortingItem item, Guid selectedCategoryId, DateTime answeredAtUtc)
+    {
+        if (HasExpired(answeredAtUtc))
+        {
+            throw new InvalidOperationException("Tiden er udløbet.");
+        }
+
+        if (selectedCategoryId == Guid.Empty)
+        {
+            throw new ArgumentException("Vælg en kategori.", nameof(selectedCategoryId));
+        }
+
+        bool isCorrect = item.IsCorrectlySortedInto(selectedCategoryId);
+
+        if (isCorrect)
+        {
+            Score += PointsPerCorrectAnswer;
+        }
+
+        return isCorrect;
+    }
 }
