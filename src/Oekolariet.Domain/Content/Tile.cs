@@ -10,7 +10,7 @@ public enum TileType
 {
     Hierarchy,
     Quiz,
-    Journeys,
-    Offers,
-    Home
+    Journey,
+    Offer,
+    Back
 }
