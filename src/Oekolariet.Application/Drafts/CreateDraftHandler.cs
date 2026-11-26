@@ -4,8 +4,6 @@ using Oekolariet.Application.Exhibitions;
 using Oekolariet.Domain.Aggregates.Drafts;
 using Oekolariet.Domain.Content;
 using Oekolariet.Shared.Drafts;
-using Oekolariet.Shared.Exhibitions;
-using Oekolariet.Shared.Games;
 
 namespace Oekolariet.Application.Drafts;
 
@@ -49,32 +47,6 @@ public sealed class CreateDraftHandler(
         drafts.Add(draft);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return ToDto(draft);
-    }
-
-    private static DraftDto ToDto(Draft draft)
-    {
-        var theme = draft.Content.Theme;
-        var game = draft.Content.Game;
-
-        return
-        new DraftDto(
-            draft.ExhibitionId,
-            draft.BasedOnVersionId,
-            draft.UpdatedAt,
-            draft.UpdatedBy,
-            new ThemeDto(theme.PrimaryColor, theme.SecondaryColor, theme.FontFamily, theme.LogoMediaId, theme.BackgroundMediaId),
-            draft.Content.Pages
-                .OrderBy(p => p.Order)
-                .Select(p => new PageDto(p.Id, p.Order, p.Layout.ToString(), p.Title, p.Body, p.MediaId))
-                .ToList(),
-
-        new SortingEditorGameDto(
-            game.Title,
-            game.Intro,
-            game.DurationSeconds,
-            game.Categories.Select(c => new CategoryDto(c.Id, c.Name, c.MediaId)).ToList(),
-            game.Items.Select(i => new EditorItemDto(i.Id, i.Name, i.MediaId, i.CorrectCategoryId, i.Explanation)).ToList()));
-
+        return draft.ToDto();
     }
 }

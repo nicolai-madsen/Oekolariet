@@ -13,8 +13,14 @@ var connectionString = builder.Configuration.GetConnectionString("Oekolariet")
 builder.Services.AddInfrastructure(connectionString, seedDevelopmentData: builder.Environment.IsDevelopment());
 builder.Services.AddSingleton(TimeProvider.System);
 
+// ExhibitionVersion services
 builder.Services.AddScoped<GetActiveVersionHandler>();
+
+// Draft services
 builder.Services.AddScoped<CreateDraftHandler>();
+builder.Services.AddScoped<GetDraftHandler>();
+
+// Game services
 builder.Services.AddScoped<StartGameHandler>();
 
 builder.Services.AddProblemDetails();
