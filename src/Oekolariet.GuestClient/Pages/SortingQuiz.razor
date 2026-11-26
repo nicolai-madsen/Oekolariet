@@ -1,4 +1,4 @@
-@page "/sorting-game-prototype"
+@page "/sorteringsquiz"
 @using System.Net
 @using System.Net.Http.Json
 @using Microsoft.JSInterop
@@ -93,7 +93,7 @@
 	private string? selectedAvatarKey;
 	private ElementReference itemElement;
 	private IJSObjectReference? dragModule;
-	private DotNetObjectReference<SortingGamePrototype>? componentReference;
+	private DotNetObjectReference<SortingQuiz>? componentReference;
 
 	private SortingGameDto? game;
 	private Queue<GuestItemDto> remainingItems = new();
