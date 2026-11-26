@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Oekolariet.Api.Auth;
 using Oekolariet.Application.Auth;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,7 +54,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Default deny: every endpoint needs a logged-in Editor,
+    // unless it says AllowAnonymous (guest endpoints and login)
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireRole(Roles.Editor)
+        .Build();
+});
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 builder.Services.AddScoped<LoginHandler>();
 
@@ -64,7 +72,7 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous(); // the API description (openapi.json) can be read without login
     await app.Services.MigrateDatabaseAsync();
 }
 
