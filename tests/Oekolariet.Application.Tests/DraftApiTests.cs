@@ -23,6 +23,7 @@ public sealed class DraftApiTests(ApiTestFixture fixture)
         var draft = await response.Content.ReadFromJsonAsync<DraftDto>();
         Assert.NotNull(draft);
         Assert.Equal(exhibitionId, draft.ExhibitionId);
+        Assert.Equal("admin@oekolariet.test", draft.UpdatedBy); // the email comes from the token
     }
 
     [Fact]

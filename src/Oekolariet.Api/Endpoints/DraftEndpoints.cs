@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Oekolariet.Application.Drafts;
 using Oekolariet.Shared.Drafts;
+using System.Security.Claims;
 
 internal static class DraftEndpoints
 {
@@ -16,12 +17,20 @@ internal static class DraftEndpoints
         return builder;
     }
 
-    private static async Task<Created<DraftDto>> CreateDraftAsync(Guid exhibitionId, CreateDraftHandler handler, CancellationToken ct)
+    // Creates a draft (editable copy) of an exhibition.
+    // Only logged-in editors get here, and their email from the token is saved as UpdatedBy.
+    private static async Task<Created<DraftDto>> CreateDraftAsync(
+    Guid exhibitionId,
+    CreateDraftHandler handler,
+    ClaimsPrincipal user, // the logged-in editor, filled in by ASP.NET Core from the JWT
+    CancellationToken ct)
     {
-        const string UserEmail = "dev@oekolariet.com"; // TODO: Get this from JWT, when login is in place
+        // The email of the logged-in editor, from the JWT (see JwtAccessTokenGenerator)
+        var userEmail = user.FindFirstValue(ClaimTypes.Email)
+            ?? throw new InvalidOperationException("The token has no email.");
 
-        var dto = await handler.HandleAsync(exhibitionId, UserEmail, ct);
+        var dto = await handler.HandleAsync(exhibitionId, userEmail, ct);
 
         return TypedResults.Created($"/api/v1/exhibitions/{exhibitionId}/draft", dto);
-    } 
+    }
 }
