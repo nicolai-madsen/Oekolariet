@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="Oekolariet.CmsClient/Oekolariet.CmsClient.csproj" Id="f6859d6e-04b2-44b6-a5f3-28d34aa639b7" />
+    <Project Path="src/Oekolariet.CmsClient/Oekolariet.CmsClient.csproj" Id="f6859d6e-04b2-44b6-a5f3-28d34aa639b7" />
     <Project Path="src/Oekolariet.Api/Oekolariet.Api.csproj" />
     <Project Path="src/Oekolariet.Application/Oekolariet.Application.csproj" />
     <Project Path="src/Oekolariet.Domain/Oekolariet.Domain.csproj" />
