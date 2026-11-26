@@ -8,14 +8,20 @@ Accept: application/json
 GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
 Accept: application/json
 
+### CMS: create draft without login (expected: 401)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+
 ### CMS: create draft (expected: 201)
 POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ### CMS: create draft again (expected: 409)
 POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ### CMS: unknown exhibition (expected: 404)
 POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ### Guest: start game (expected: 201)
 POST {{baseUrl}}/api/v1/games
@@ -27,6 +33,7 @@ Content-Type: application/json
 }
 
 ### Auth: login with the test editor (expected: 200 + token)
+# @name login
 POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 

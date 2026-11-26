@@ -15,7 +15,7 @@ public sealed class DraftApiTests(ApiTestFixture fixture)
         var exhibitionId = await fixture.CreateUnpublishedExhibitionAsync();
         var path = $"/api/v1/exhibitions/{exhibitionId}/draft";
 
-        using var response = await fixture.Client.PostAsync(path, content: null);
+        using var response = await fixture.EditorClient.PostAsync(path, content: null);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(path, response.Headers.Location?.OriginalString);
@@ -30,7 +30,7 @@ public sealed class DraftApiTests(ApiTestFixture fixture)
     {
         var path = $"/api/v1/exhibitions/{Guid.NewGuid()}/draft";
 
-        using var response = await fixture.Client.PostAsync(path, content: null);
+        using var response = await fixture.EditorClient.PostAsync(path, content: null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -42,11 +42,23 @@ public sealed class DraftApiTests(ApiTestFixture fixture)
         var path = $"/api/v1/exhibitions/{exhibitionId}/draft";
 
         // Create the first draft here so the conflict test can run on its own.
-        using var firstResponse = await fixture.Client.PostAsync(path, content: null);
+        using var firstResponse = await fixture.EditorClient.PostAsync(path, content: null);
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
-        using var secondResponse = await fixture.Client.PostAsync(path, content: null);
+        using var secondResponse = await fixture.EditorClient.PostAsync(path, content: null);
 
         Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateDraft_WithoutLogin_ReturnsUnauthorized()
+    {
+        var exhibitionId = await fixture.CreateUnpublishedExhibitionAsync();
+        var path = $"/api/v1/exhibitions/{exhibitionId}/draft";
+
+        // Client has no token, so default deny must stop it (AC-02)
+        using var response = await fixture.Client.PostAsync(path, content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

@@ -70,7 +70,8 @@ internal static class DevelopmentSeeder
             return;
         }
 
-        // The password is hashed the same way as for real editors
+        // The password is hashed the same way as for real editors.
+        // "Udvikling123!" is a test password for development only. Real passwords are never written in code.
         var hasher = new IdentityPasswordHasher();
         var passwordHash = hasher.Hash("Udvikling123!");
 
