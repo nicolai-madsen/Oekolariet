@@ -12,6 +12,8 @@ public sealed class Game
     public DateTime EndsAt { get; private set; }
     public int Score { get; private set; }
     private const int PointsPerCorrectAnswer = 10;
+    private readonly List<GameAnswer> _answers = [];
+    public IReadOnlyCollection<GameAnswer> Answers => _answers.AsReadOnly();
 
     private Game() { } // Used by EF Core when loading a saved game.
 
@@ -60,9 +62,9 @@ public sealed class Game
         };
     }
 
-    public bool HasExpired(DateTime nowUtc) => nowUtc >= EndsAt;
+    public bool HasExpired(DateTime nowUtc) => nowUtc >= EndsAt; // The game is still valid at the exact deadline, but not after.
 
-    // The caller loads the item from the exhibition version this game started with.
+    // Returns true if the answer was correct, false if it was incorrect.
     public bool SubmitAnswer(SortingItem item, Guid selectedCategoryId, DateTime answeredAtUtc)
     {
         if (HasExpired(answeredAtUtc))
@@ -75,7 +77,15 @@ public sealed class Game
             throw new ArgumentException("Vælg en kategori.", nameof(selectedCategoryId));
         }
 
+        if (_answers.Any(answer => answer.ItemId == item.Id))
+        {
+            throw new InvalidOperationException("Genstanden er allerede besvaret i denne runde.");
+        }
+
         bool isCorrect = item.IsCorrectlySortedInto(selectedCategoryId);
+
+        // A wrong answer also uses up the item for this round.
+        _answers.Add(new GameAnswer(Id, item.Id));
 
         if (isCorrect)
         {
