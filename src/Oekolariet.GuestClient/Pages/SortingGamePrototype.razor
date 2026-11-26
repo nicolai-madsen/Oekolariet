@@ -17,7 +17,33 @@
 
 	@if (currentItem is null)
 	{
-		<RadzenButton Text="Start spil" Click="@StartGameAsync" Disabled="@isBusy" />
+		<h2>Vælg din avatar</h2>
+
+		<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+			@foreach (var avatar in Avatars)
+			{
+				var isSelected = selectedAvatarKey == avatar.Key;
+
+				<button @key="avatar.Key"
+						type="button"
+						disabled="@isBusy"
+						aria-pressed="@(isSelected ? "true" : "false")"
+						@onclick="() => SelectAvatar(avatar.Key)"
+						style="padding: 0.5rem; border-radius: 0.75rem; background: white;
+					border: 3px solid @(isSelected ? "#356344" : "#ccc");">
+					<img src="@($"images/Avatars/{avatar.FileName}")"
+						 alt=""
+						 width="80"
+						 height="80"
+						 style="display: block; object-fit: contain;" />
+					<span>@avatar.Name</span>
+				</button>
+			}
+		</div>
+
+		<RadzenButton Text="Start spil"
+					  Click="@StartGameAsync"
+					  Disabled="@(isBusy || selectedAvatarKey is null)" />
 	}
 	else
 	{
@@ -52,9 +78,19 @@
 	private const string BinStyle =
 		"flex: 1; min-height: 7rem; padding: 1rem; border: 2px dashed #52745c; border-radius: 0.5rem;";
 
-	// Use the existing avatar until the guest can select one before starting the round.
-	private const string AvatarKey = "odder";
+	private sealed record AvatarOption(string Key, string Name, string FileName);
 
+	// The key is stored with the game and stays valid if the image file is renamed.
+	private static readonly AvatarOption[] Avatars =
+	[
+		new("odder", "Otto Odder", "otto-default.png"),
+		new("egern", "Egern", "EgernAvatar.png"),
+		new("froe", "Frø", "FroeAvatar.png"),
+		new("graevling", "Grævling", "GraevlingAvatar.png"),
+		new("pindsvin", "Pindsvin", "PindsvinAvatar.png")
+	];
+
+	private string? selectedAvatarKey;
 	private ElementReference itemElement;
 	private IJSObjectReference? dragModule;
 	private DotNetObjectReference<SortingGamePrototype>? componentReference;
@@ -64,6 +100,11 @@
 	private GuestItemDto? currentItem;
 	private bool isBusy;
 	private string feedback = string.Empty;
+
+	private void SelectAvatar(string key)
+	{
+		selectedAvatarKey = key;
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -81,7 +122,9 @@
 
 	private async Task StartGameAsync()
 	{
-		if (isBusy)
+		var avatarKey = selectedAvatarKey;
+
+		if (isBusy || avatarKey is null)
 		{
 			return;
 		}
@@ -98,7 +141,7 @@
 		try
 		{
 			using var response = await Http.PostAsJsonAsync(
-				"api/v1/games", new StartGameRequest(exhibitionId, AvatarKey));
+				"api/v1/games", new StartGameRequest(exhibitionId, avatarKey));
 
 			response.EnsureSuccessStatusCode();
 
@@ -116,6 +159,9 @@
 			Random.Shared.Shuffle(items);
 			remainingItems = new Queue<GuestItemDto>(items);
 			currentItem = remainingItems.Dequeue();
+
+			// The next guest starts with a fresh avatar selection.
+			selectedAvatarKey = null;
 		}
 		catch (HttpRequestException)
 		{
@@ -162,6 +208,7 @@
 			}
 
 			feedback = result.IsCorrect ? "Rigtigt!" : "Forkert.";
+
 			if (!string.IsNullOrWhiteSpace(result.Explanation))
 			{
 				feedback += $" {result.Explanation}";
