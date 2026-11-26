@@ -16,6 +16,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<GetActiveVersionHandler>();
 builder.Services.AddScoped<CreateDraftHandler>();
 builder.Services.AddScoped<StartGameHandler>();
+builder.Services.AddScoped<SubmitAnswerHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();

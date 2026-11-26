@@ -14,6 +14,13 @@ internal static class GameEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapPost("/{gameId:guid}/answers", SubmitAnswerAsync)
+            .WithName("AnswerItem")
+            .AllowAnonymous()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         return builder;
     }
 
@@ -24,5 +31,20 @@ internal static class GameEndpoints
     {
         var dto = await handler.HandleAsync(request.ExhibitionId, request.AvatarKey, ct);
         return TypedResults.Created((string?)null, dto);
+    }
+
+    private static async Task<Ok<AnswerResultDto>> SubmitAnswerAsync(
+    Guid gameId,
+    AnswerRequest request,
+    SubmitAnswerHandler handler,
+    CancellationToken ct)
+    {
+        var result = await handler.HandleAsync(
+            gameId,
+            request.ItemId,
+            request.CategoryId,
+            ct);
+
+        return TypedResults.Ok(result);
     }
 }
