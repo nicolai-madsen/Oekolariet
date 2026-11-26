@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Oekolariet.Domain.Content;
 using Oekolariet.Infrastructure.Seeding;
 using Oekolariet.Shared.Games;
 
@@ -38,5 +39,41 @@ public sealed class SubmitAnswerApiTests(ApiTestFixture fixture)
         using var secondResponse = await fixture.Client.PostAsJsonAsync(path, answer);
 
         Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task SubmitAnswer_WhenNewVersionIsPublished_UsesVersionFromGameStart()
+    {
+        var exhibitionId = await fixture.CreateUnpublishedExhibitionAsync();
+        var plastic = new Category(Guid.NewGuid(), "Plast", null);
+        var cardboard = new Category(Guid.NewGuid(), "Pap", null);
+        var item = new SortingItem(Guid.NewGuid(), "Testgenstand", null, plastic.Id, null);
+
+        var quiz = new SortingGame("Testquiz", "Vælg en spand", 300, [plastic, cardboard], [item]);
+        var content = ExhibitionContent.Empty with { Game = quiz };
+        var firstVersionId = await fixture.PublishVersionAsync(exhibitionId, content);
+
+        using var startResponse = await fixture.Client.PostAsJsonAsync(
+            "/api/v1/games", new StartGameRequest(exhibitionId, "odder"));
+
+        Assert.Equal(HttpStatusCode.Created, startResponse.StatusCode);
+        var game = Assert.IsType<SortingGameDto>(
+            await startResponse.Content.ReadFromJsonAsync<GameDto>());
+        Assert.Equal(firstVersionId, game.VersionId);
+
+        // Keep the item and category IDs so only the correct answer changes between versions.
+        var updatedItem = item with { CorrectCategoryId = cardboard.Id };
+        var updatedContent = content with { Game = quiz with { Items = [updatedItem] } };
+        var secondVersionId = await fixture.PublishVersionAsync(exhibitionId, updatedContent);
+        Assert.NotEqual(firstVersionId, secondVersionId);
+
+        using var answerResponse = await fixture.Client.PostAsJsonAsync(
+            $"/api/v1/games/{game.GameId}/answers", new AnswerRequest(item.Id, plastic.Id));
+
+        Assert.Equal(HttpStatusCode.OK, answerResponse.StatusCode);
+        var result = await answerResponse.Content.ReadFromJsonAsync<AnswerResultDto>();
+        Assert.NotNull(result);
+        Assert.True(result.IsCorrect);
+        Assert.Equal(plastic.Id, result.CorrectCategoryId);
     }
 }
