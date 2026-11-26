@@ -1,36 +1,15 @@
 @exhibitionId = 9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001
 
+
 ### Guest: active version -> 200
 GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/active-version
 Accept: application/json
+
 
 ### Unknown Exhibition -> 404
 GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/active-version
 Accept: application/json
 
-### CMS: create draft without login (expected: 401)
-POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
-
-### CMS: create draft (expected: 201)
-POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
-Authorization: Bearer {{login.response.body.$.accessToken}}
-
-### CMS: create draft again (expected: 409)
-POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
-Authorization: Bearer {{login.response.body.$.accessToken}}
-
-### CMS: unknown exhibition (expected: 404)
-POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
-Authorization: Bearer {{login.response.body.$.accessToken}}
-
-### Guest: start game (expected: 201)
-POST {{baseUrl}}/api/v1/games
-Content-Type: application/json
-
-{
-  "exhibitionId": "{{exhibitionId}}",
-  "avatarKey": "odder"
-}
 
 ### Auth: login with the test editor (expected: 200 + token)
 # @name login
@@ -42,6 +21,7 @@ Content-Type: application/json
   "password": "Udvikling123!"
 }
 
+
 ### Auth: wrong password (expected: 401)
 POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
@@ -51,6 +31,7 @@ Content-Type: application/json
   "password": "WrongPassword"
 }
 
+
 ### Auth: empty email (expected: 400)
 POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
@@ -58,4 +39,45 @@ Content-Type: application/json
 {
   "email": "",
   "password": "Udvikling123!"
+}
+
+
+### CMS: create draft without login (expected: 401)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+
+
+### CMS: create draft (expected: 201)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
+### CMS: create draft again (expected: 409)
+POST {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
+### CMS: unknown exhibition (expected: 404)
+POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
+### CMS: Get Draft (Expected: 200 AFTER create draft, otherwise 404)
+GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/draft
+Accept: application/json
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
+### CMS: Get Draft, unknown exhibition (Expected: 404 ProblemDetails)
+GET {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
+Accept: application/json
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+
+### Guest: start game (expected: 201)
+POST {{baseUrl}}/api/v1/games
+Content-Type: application/json
+
+{
+  "exhibitionId": "{{exhibitionId}}",
+  "avatarKey": "odder"
 }

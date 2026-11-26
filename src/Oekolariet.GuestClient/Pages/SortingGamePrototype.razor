@@ -1,62 +1,72 @@
 @page "/sorting-game-prototype"
+@using System.Net
+@using System.Net.Http.Json
 @using Microsoft.JSInterop
+@using Oekolariet.Shared.Games
 @using Radzen
 @using Radzen.Blazor
 @implements IAsyncDisposable
+@inject HttpClient Http
+@inject IConfiguration Configuration
 @inject IJSRuntime JS
 
 <PageTitle>Sortér affaldet</PageTitle>
 
 <RadzenStack Gap="1rem" Style="max-width: 40rem;">
 	<h1>Sortér affaldet</h1>
-	<p>Træk avisen hen til den rigtige beholder.</p>
 
-	@* JavaScript moves this element as soon as the finger moves. *@
-	<div @ref="newspaperElement"
-		 hidden="@isSorted"
+	@if (currentItem is null)
+	{
+		<RadzenButton Text="Start spil" Click="@StartGameAsync" Disabled="@isBusy" />
+	}
+	else
+	{
+		<p>Træk genstanden hen til den rigtige spand.</p>
+	}
+
+	@* Keep the same element between items so its pointer handlers stay attached. *@
+	<div @ref="itemElement"
+		 hidden="@(currentItem is null)"
 		 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
 		<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
-			📰 Avis
+			@currentItem?.Name
 		</RadzenCard>
 	</div>
 
-	@* Each bin has an English identifier and a Danish label. *@
-	<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-		<div data-bin="paper" style="@BinStyle">
-			<strong>Papir</strong>
-
-			@if (isSorted)
+	@if (currentItem is not null && game is not null)
+	{
+		<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+			@foreach (var category in game.Categories)
 			{
-				<RadzenCard Style="margin-top: 0.5rem;">📰 Avis</RadzenCard>
+				<div @key="category.Id" data-bin="@category.Id" style="@BinStyle">
+					<strong>@category.Name</strong>
+				</div>
 			}
-		</div>
-
-		<div data-bin="glass" style="@BinStyle">
-			<strong>Glas</strong>
-		</div>
-	</RadzenStack>
+		</RadzenStack>
+	}
 
 	<p role="status">@feedback</p>
-
-	<div>
-		<RadzenButton Text="Spil igen" Click="@ResetGame" />
-	</div>
 </RadzenStack>
 
 @code {
 	private const string BinStyle =
 		"flex: 1; min-height: 7rem; padding: 1rem; border: 2px dashed #52745c; border-radius: 0.5rem;";
 
-	private ElementReference newspaperElement;
+	// Use the existing avatar until the guest can select one before starting the round.
+	private const string AvatarKey = "odder";
+
+	private ElementReference itemElement;
 	private IJSObjectReference? dragModule;
 	private DotNetObjectReference<SortingGamePrototype>? componentReference;
 
-	private bool isSorted;
+	private SortingGameDto? game;
+	private Queue<GuestItemDto> remainingItems = new();
+	private GuestItemDto? currentItem;
+	private bool isBusy;
 	private string feedback = string.Empty;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		// The card must exist in the browser before we attach pointer events.
 		if (firstRender)
 		{
 			dragModule = await JS.InvokeAsync<IJSObjectReference>(
@@ -65,39 +75,121 @@
 			componentReference = DotNetObjectReference.Create(this);
 
 			await dragModule.InvokeVoidAsync(
-				"enableImmediateDrag", newspaperElement, componentReference);
+				"enableImmediateDrag", itemElement, componentReference);
+		}
+	}
+
+	private async Task StartGameAsync()
+	{
+		if (isBusy)
+		{
+			return;
+		}
+
+		if (!Guid.TryParse(Configuration["ExhibitionId"], out var exhibitionId))
+		{
+			feedback = "Udstillingens id mangler eller er ugyldigt.";
+			return;
+		}
+
+		isBusy = true;
+		feedback = string.Empty;
+
+		try
+		{
+			using var response = await Http.PostAsJsonAsync(
+				"api/v1/games", new StartGameRequest(exhibitionId, AvatarKey));
+
+			response.EnsureSuccessStatusCode();
+
+			var result = await response.Content.ReadFromJsonAsync<GameDto>();
+			if (result is not SortingGameDto sortingGame || sortingGame.Items.Count == 0)
+			{
+				feedback = "Der er ingen genstande at sortere.";
+				return;
+			}
+
+			game = sortingGame;
+
+			// Shuffle once per round so each item is shown at most once.
+			var items = sortingGame.Items.ToArray();
+			Random.Shared.Shuffle(items);
+			remainingItems = new Queue<GuestItemDto>(items);
+			currentItem = remainingItems.Dequeue();
+		}
+		catch (HttpRequestException)
+		{
+			feedback = "Spillet kunne ikke startes. Prøv igen.";
+		}
+		finally
+		{
+			isBusy = false;
 		}
 	}
 
 	[JSInvokable]
-	public Task HandleBinDrop(string bin)
+	public async Task HandleBinDrop(string bin)
 	{
-		// JavaScript handles the movement. C# checks the player's answer.
-		switch (bin)
+		if (isBusy || game is null || currentItem is null ||
+			!Guid.TryParse(bin, out var categoryId))
 		{
-			case "paper":
-				isSorted = true;
-				feedback = "Rigtigt! Avisen hører til i papir.";
-				break;
-
-			case "glass":
-				feedback = "Prøv igen. Hvilket materiale er avisen lavet af?";
-				break;
+			return;
 		}
 
-		// A callback from JavaScript needs to request a UI update.
-		return InvokeAsync(StateHasChanged);
-	}
+		isBusy = true;
 
-	private void ResetGame()
-	{
-		isSorted = false;
-		feedback = string.Empty;
+		try
+		{
+			var request = new AnswerRequest(currentItem.Id, categoryId);
+
+			using var response = await Http.PostAsJsonAsync(
+				$"api/v1/games/{game.GameId}/answers", request);
+
+			if (response.StatusCode == HttpStatusCode.Conflict)
+			{
+				currentItem = null;
+				feedback = "Tiden er udløbet, eller genstanden er allerede besvaret. Start en ny runde.";
+				return;
+			}
+
+			response.EnsureSuccessStatusCode();
+
+			var result = await response.Content.ReadFromJsonAsync<AnswerResultDto>();
+			if (result is null)
+			{
+				feedback = "Svaret fra spillet kunne ikke læses.";
+				return;
+			}
+
+			feedback = result.IsCorrect ? "Rigtigt!" : "Forkert.";
+			if (!string.IsNullOrWhiteSpace(result.Explanation))
+			{
+				feedback += $" {result.Explanation}";
+			}
+
+			if (result.IsGameCompleted || remainingItems.Count == 0)
+			{
+				currentItem = null;
+				feedback += " Runden er slut.";
+			}
+			else
+			{
+				currentItem = remainingItems.Dequeue();
+			}
+		}
+		catch (HttpRequestException)
+		{
+			feedback = "Svaret kunne ikke bekræftes. Prøv igen.";
+		}
+		finally
+		{
+			isBusy = false;
+			await InvokeAsync(StateHasChanged);
+		}
 	}
 
 	public async ValueTask DisposeAsync()
 	{
-		// Release the references when the player leaves the page.
 		componentReference?.Dispose();
 
 		if (dragModule is not null)

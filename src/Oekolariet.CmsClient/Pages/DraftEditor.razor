@@ -1,0 +1,87 @@
+@page "/exhibitions/{ExhibitionId:guid}/draft"
+
+@using Oekolariet.CmsClient.Services
+@using Oekolariet.Shared.Drafts
+@inject DraftClient Drafts
+
+<PageTitle>Kladde</PageTitle>
+<h1>Kladde</h1>
+
+@if (_loading)
+{
+	<p>Henter kladden...</p>
+}
+else if (_error is not null)
+{
+	<p class="error">@_error</p>
+}
+else if (_draft is null)
+{
+	<p>Der er ingen kladde for denne udstilling endnu.</p>
+	<button @onclick="CreateDraftAsync" disabled="@_creating">Opret Kladde</button>
+}
+else
+{
+	<p>Sidst ændret @_draft.UpdatedAt.ToLocalTime().ToString("g") af @_draft.UpdatedBy</p>
+
+	@foreach (var contentPage in _draft.Pages.OrderBy(p => p.Order))
+	{
+		<section>
+			<h2>@contentPage.Title</h2>
+			<p>@contentPage.Body</p>
+		</section>
+	}
+}
+
+@code {
+	[Parameter] // Binds to the {ExhibitionId:guid} in the page route 
+	public Guid ExhibitionId { get; set; }
+
+	private DraftDto? _draft;
+
+	private bool _loading = true;
+	private string? _error;
+
+	private bool _creating;
+
+	// OnParametersSetAsync() is chosen over OnInitializedAsync().
+	// If you navigate to another draft for another exhibition (only 1 draft pr. exhibition), Blazor will reuse the component.
+	// with OnParametersSetAsync() the method is read every time the parameters change, instead of just on the first load (OnInitializedAsync())
+	protected override async Task OnParametersSetAsync()
+	{
+		_loading = true;
+		_error = null;
+
+		try
+		{
+			_draft = await Drafts.GetAsync(ExhibitionId);
+		}
+		catch (HttpRequestException)
+		{
+			_error = "Kunne ikke hente kladden. Tjek API status";
+		}
+		finally // gotta get set _loading to false eventually, even if it fails
+		{
+			_loading = false;
+		}
+	}
+
+	private async Task CreateDraftAsync() // method is run @onclick 
+	{
+		_creating = true;
+		_error = null;
+
+		try
+		{
+			_draft = await Drafts.CreateAsync(ExhibitionId);
+		}
+		catch (HttpRequestException)
+		{
+			_error = "Kunne ikke oprette kladden.";
+		}
+		finally
+		{
+			_creating = false;
+		}
+	}
+}

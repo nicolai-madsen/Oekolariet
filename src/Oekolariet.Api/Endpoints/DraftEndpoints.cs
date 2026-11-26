@@ -14,16 +14,20 @@ internal static class DraftEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapGet("/", GetDraftAsync)
+            .WithName("GetDraft")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         return builder;
     }
 
     // Creates a draft (editable copy) of an exhibition.
     // Only logged-in editors get here, and their email from the token is saved as UpdatedBy.
     private static async Task<Created<DraftDto>> CreateDraftAsync(
-    Guid exhibitionId,
-    CreateDraftHandler handler,
-    ClaimsPrincipal user, // the logged-in editor, filled in by ASP.NET Core from the JWT
-    CancellationToken ct)
+        Guid exhibitionId,
+        CreateDraftHandler handler,
+        ClaimsPrincipal user, // the logged-in editor, filled in by ASP.NET Core from the JWT
+        CancellationToken ct)
     {
         // The email of the logged-in editor, from the JWT (see JwtAccessTokenGenerator)
         var userEmail = user.FindFirstValue(ClaimTypes.Email)
@@ -32,5 +36,11 @@ internal static class DraftEndpoints
         var dto = await handler.HandleAsync(exhibitionId, userEmail, ct);
 
         return TypedResults.Created($"/api/v1/exhibitions/{exhibitionId}/draft", dto);
+    }
+
+    private static async Task<Ok<DraftDto>> GetDraftAsync(Guid exhibitionId, GetDraftHandler handler, CancellationToken ct)
+    {
+        var dto = await handler.HandleAsync(exhibitionId, ct);
+        return TypedResults.Ok(dto);
     }
 }

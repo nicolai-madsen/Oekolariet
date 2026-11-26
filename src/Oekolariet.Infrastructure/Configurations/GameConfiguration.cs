@@ -21,5 +21,19 @@ internal sealed class GameConfiguration : IEntityTypeConfiguration<Game>
             .WithMany()
             .HasForeignKey(g => g.VersionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.OwnsMany(game => game.Answers, answers =>
+        {
+            answers.ToTable("GameAnswers");
+            answers.WithOwner().HasForeignKey(answer => answer.GameId);
+
+            // An item can be answered once per game and used again in another game.
+            answers.HasKey(answer => new { answer.GameId, answer.ItemId });
+            answers.Property(answer => answer.ItemId).ValueGeneratedNever();
+        });
+
+        builder.Navigation(game => game.Answers) // Configure the private field for EF Core to use when loading a saved game.
+            .HasField("_answers")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

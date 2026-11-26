@@ -191,6 +191,24 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                         .HasForeignKey("VersionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.OwnsMany("Oekolariet.Domain.Aggregates.Games.GameAnswer", "Answers", b1 =>
+                        {
+                            b1.Property<Guid>("GameId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<Guid>("ItemId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.HasKey("GameId", "ItemId");
+
+                            b1.ToTable("GameAnswers", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("GameId");
+                        });
+
+                    b.Navigation("Answers");
                 });
 #pragma warning restore 612, 618
         }
