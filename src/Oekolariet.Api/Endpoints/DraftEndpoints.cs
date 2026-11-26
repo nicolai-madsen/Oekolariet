@@ -13,6 +13,10 @@ internal static class DraftEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapGet("/", GetDraftAsync)
+            .WithName("GetDraft")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         return builder;
     }
 
@@ -23,5 +27,11 @@ internal static class DraftEndpoints
         var dto = await handler.HandleAsync(exhibitionId, UserEmail, ct);
 
         return TypedResults.Created($"/api/v1/exhibitions/{exhibitionId}/draft", dto);
-    } 
+    }
+
+    private static async Task<Ok<DraftDto>> GetDraftAsync(Guid exhibitionId, GetDraftHandler handler, CancellationToken ct)
+    {
+        var dto = await handler.HandleAsync(exhibitionId, ct);
+        return TypedResults.Ok(dto);
+    }
 }
