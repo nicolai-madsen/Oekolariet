@@ -1,4 +1,5 @@
 using Oekolariet.Domain.Aggregates.Games;
+using Oekolariet.Domain.Content;
 
 namespace Oekolariet.Domain.Tests;
 
@@ -36,5 +37,43 @@ public sealed class GameTests
         var now = start.Add(duration).AddTicks(ticksFromDeadline);
 
         Assert.Equal(expected, game.HasExpired(now));
+    }
+
+    [Theory]
+    [InlineData(true, 10)]
+    [InlineData(false, 0)]
+    public void SubmitAnswer_BeforeDeadline_ReturnsResultAndAwardsPoints(
+    bool selectsCorrectCategory, int expectedScore)
+    {
+        var startedAt = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        var game = Game.Start(Guid.NewGuid(), Guid.NewGuid(), 1, "odder",
+            startedAt, TimeSpan.FromSeconds(30));
+
+        var plasticId = Guid.NewGuid();
+        var paperId = Guid.NewGuid();
+        var item = new SortingItem(Guid.NewGuid(), "Plastflaske", null, plasticId, null);
+        var selectedCategoryId = selectsCorrectCategory ? plasticId : paperId;
+
+        var isCorrect = game.SubmitAnswer(item, selectedCategoryId, startedAt.AddSeconds(5));
+
+        Assert.Equal(selectsCorrectCategory, isCorrect);
+        Assert.Equal(expectedScore, game.Score);
+    }
+
+    [Fact]
+    public void SubmitAnswer_AtDeadline_RejectsAnswerAndKeepsScore()
+    {
+        var startedAt = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        var game = Game.Start(Guid.NewGuid(), Guid.NewGuid(), 1, "odder",
+            startedAt, TimeSpan.FromSeconds(30));
+
+        var plasticId = Guid.NewGuid();
+        var item = new SortingItem(Guid.NewGuid(), "Plastflaske", null, plasticId, null);
+
+        // Even a correct answer is too late at the exact end of the round.
+        Assert.Throws<InvalidOperationException>(() =>
+            game.SubmitAnswer(item, plasticId, game.EndsAt));
+
+        Assert.Equal(0, game.Score);
     }
 }
