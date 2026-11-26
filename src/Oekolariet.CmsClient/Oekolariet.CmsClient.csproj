@@ -16,4 +16,8 @@
     <Folder Include="wwwroot\sample-data\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Oekolariet.Shared\Oekolariet.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

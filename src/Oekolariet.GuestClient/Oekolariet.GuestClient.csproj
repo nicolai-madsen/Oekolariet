@@ -17,4 +17,8 @@
     <ProjectReference Include="..\Oekolariet.Shared\Oekolariet.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>
