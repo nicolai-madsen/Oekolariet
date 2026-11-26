@@ -13,7 +13,7 @@ servers:
   - url: /api/v1
 
 # Deny access as default: every operation requires a JWT unless it overrides with `security: []`.
-# This is to mirrors the fallback policy + [AllowAnonymous] in ASP.NET Core.
+# This is to mirror the fallback policy + [AllowAnonymous] in ASP.NET Core.
 security:
   - bearerAuth: []
 
@@ -99,7 +99,7 @@ paths:
               schema: { $ref: "#/components/schemas/GameDto" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
+        "409": { $ref: "#/components/responses/Conflict",  description: "The exhibition has no active version (it has not been published yet)" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /games/{gameId}/answers:
@@ -123,7 +123,7 @@ paths:
               schema: { $ref: "#/components/schemas/AnswerResultDto" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
+        "409": { $ref: "#/components/responses/Conflict", "The item is already answered, or the game has expired (past expiresAt)" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /games/{gameId}/result:
@@ -513,7 +513,7 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ProblemDetails" }
     Conflict:
-      description: Current state prevents the action (already answered, game not finished, draft exists)
+      description: The current state of the resource prevents the action. See each operation for the specific cause.
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -715,11 +715,15 @@ components:
 
     SortingGameDto:
       type: object
-      required: [gameId, versionId, type, categories, items]
+      required: [gameId, versionId, type, expiresAt, categories, items]
       properties:
         gameId: { type: string, format: uuid }
         versionId: { type: string, format: uuid }
         type: { const: Sorting }
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the server stops accepting answers. The client counts down to this, not to durationSeconds.
         categories:
           type: array
           items: { $ref: "#/components/schemas/Category" }
@@ -804,7 +808,7 @@ components:
         type: { const: Sorting }
         title: { type: string, minLength: 1, maxLength: 100 }
         intro: { type: string, maxLength: 200 }
-        durationSeconds: { type: integer, minimum: 10, maximum: 600, default: 30 }
+        durationSeconds: { type: integer, minimum: 10, maximum: 600 }
         categories:
           type: array
           items: { $ref: "#/components/schemas/Category" }
