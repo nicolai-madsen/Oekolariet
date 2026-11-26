@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Oekolariet.Domain.Aggregates.Exhibitions;
+using Oekolariet.Domain.Content;
 using Oekolariet.Infrastructure;
 using Testcontainers.MsSql;
 
@@ -36,6 +37,24 @@ public sealed class ApiTestFixture : IAsyncLifetime
         await db.SaveChangesAsync();
 
         return exhibition.Id;
+    }
+
+    public async Task<Guid> PublishVersionAsync(Guid exhibitionId, ExhibitionContent content)
+    {
+        var factory = _factory ?? throw new InvalidOperationException("The test API has not started.");
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OekolarietDbContext>();
+
+        var exhibition = await db.Set<Exhibition>().FindAsync(exhibitionId)
+            ?? throw new InvalidOperationException($"Test exhibition {exhibitionId} was not found.");
+
+        // Publish updates the exhibition's active version and returns the version to save.
+        var version = exhibition.Publish(content, "test@oekolariet.local", DateTime.UtcNow);
+        db.ExhibitionVersions.Add(version);
+        await db.SaveChangesAsync();
+
+        return version.Id;
     }
 
     public async Task DisposeAsync()
