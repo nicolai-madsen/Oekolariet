@@ -1,4 +1,24 @@
 @page "/"
+@inject IConfiguration Configuration
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Økolariet CMS</PageTitle>
 
+<h1>Økolariet CMS</h1>
+
+@if (_exhibitionId is null)
+{
+	<p class="error">Exhibition mangler i wwwroot/appsettings.json</p>
+}
+else
+{
+	<a href="@($"exhibitions/{_exhibitionId}/draft")">Gå til kladden</a>
+}
+
+@code {
+	private string? _exhibitionId;
+
+	protected override void OnInitialized() // Just reading config, no need for async here
+	{
+		_exhibitionId = Configuration["ExhibitionId"];
+	}
+}

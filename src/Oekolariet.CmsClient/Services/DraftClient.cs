@@ -11,7 +11,7 @@ public sealed class DraftClient(HttpClient http)
     public async Task<DraftDto?> GetAsync(Guid exhibitionId, CancellationToken ct = default)
     {
         // "using" is IDispoable, so the data is removed from memory, when its done being used.
-        using var response = await http.GetAsync($"api/v1/exhibition/{exhibitionId}/draft", ct); 
+        using var response = await http.GetAsync($"api/v1/exhibitions/{exhibitionId}/draft", ct); 
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
