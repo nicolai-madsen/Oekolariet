@@ -27,6 +27,7 @@ POST {{baseUrl}}/api/v1/exhibitions/00000000-0000-0000-0000-000000000001/draft
 ### Guest: start game (expected: 201)
 POST {{baseUrl}}/api/v1/games
 Content-Type: application/json
+
 {
   "exhibitionId": "{{exhibitionId}}",
   "avatarKey": "odder"

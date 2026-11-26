@@ -2,7 +2,7 @@ using Oekolariet.Application.Common.Errors;
 using Oekolariet.Application.Drafts;
 using Oekolariet.Shared.Drafts;
 
-namespace Okelariet.Application.Drafts;
+namespace Oeklariet.Application.Drafts;
 
 // Handler for retrieving a draft associated with a specific exhibition.
 // It uses the IDraftRepository to fetch the draft and maps it to a DraftDto for returning to the caller.

@@ -4,7 +4,7 @@ using Oekolariet.Application.Drafts;
 using Oekolariet.Application.Exhibitions;
 using Oekolariet.Infrastructure;
 using Oekolariet.Application.Games;
-using Okelariet.Application.Drafts;
+using Oeklariet.Application.Drafts;
 
 var builder = WebApplication.CreateBuilder(args);
 

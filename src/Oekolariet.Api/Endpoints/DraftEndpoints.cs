@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Oekolariet.Application.Drafts;
 using Oekolariet.Shared.Drafts;
-using Okelariet.Application.Drafts;
+using Oeklariet.Application.Drafts;
 
 internal static class DraftEndpoints
 {
