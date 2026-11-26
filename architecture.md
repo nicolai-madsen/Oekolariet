@@ -26,10 +26,11 @@ Changes to `openapi.yaml`, ADRs or this file go through a PR. A change based on 
 | `Oekolariet.Api` | Minimal API endpoints, ProblemDetails, CORS, composition root | Application, Infrastructure |
 | `Oekolariet.Shared` | DTOs: the C# side of `openapi.yaml` | Nothing |
 | `Oekolariet.GuestClient` | Blazor WebAssembly app on the touchscreen (anonymous) | Shared only |
+| `Oekolariet.CmsClient` | Blazor WebAssembly app for the staff: Edits drafts and publishes versions (requires JWT and role: Editor) | Shared only |
 | `tests/Oekolariet.Domain.Tests` | Unit tests of domain rules | Domain |
 | `tests/Oekolariet.Application.Tests` | Unit tests of use cases with fake repositories | Application |
 
-Planned, not created yet: the CMS client (coming soon) and a `tests/Oekolariet.Infrastructure.Tests` project for integration tests with a real database.
+Planned, not created yet: `tests/Oekolariet.Infrastructure.Tests` project for integration tests with a real database.
 
 
 ## Dependency rules
