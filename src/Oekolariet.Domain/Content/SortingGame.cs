@@ -37,4 +37,10 @@ public sealed record SortingItem(
     string Name,
     Guid? MediaId,
     Guid CorrectCategoryId,
-    string? Explanation);
+    string? Explanation)
+{
+    public bool IsCorrectlySortedInto(Guid selectedCategoryId)
+    {
+        return selectedCategoryId == CorrectCategoryId;
+    }
+}
