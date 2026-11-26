@@ -32,6 +32,12 @@ internal static class DevelopmentSeeder
                     Body: "Hej! Jeg hedder Otto Odder. Følg med og lær om noget skrald, dude.",
                     MediaId: null),
             ],
+            [
+                new Tile(TileType.Hierarchy, "Affaldshierarkiet", MediaId: null),
+                new Tile(TileType.Quiz, "Sorteringsquizzen", MediaId: null),
+                new Tile(TileType.Journeys, "Materialernes rejse", MediaId: null),
+                new Tile(TileType.Offers, "RessourceCenter Vejles tilbud", MediaId: null),
+            ],
             new SortingGame(
                 Title: "Sorter affaldet",
                 Intro: "Træk tingene over i den rigtige spand",

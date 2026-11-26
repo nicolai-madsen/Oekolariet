@@ -22,3 +22,8 @@ public sealed record PageDto(
     string Title,
     string Body,
     Guid? MediaId);
+
+public sealed record TileDto(
+    string Type,     // store as a string, not the enum type, according to our api specification
+    string? Title,
+    Guid? MediaId);

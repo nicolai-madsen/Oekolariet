@@ -11,6 +11,7 @@ internal static class TestData
     public static ExhibitionContent CreateContent() => new(
         new Theme("#ffffff", "#A5D6A7", "K2D", null, null),
         [new Page(Guid.NewGuid(), 1, PageLayout.TextOnly, "Velkommen!", "Jeg hedder Otto Odder", null)],
+        [],
         SortingGame.Empty);
 
     public static Exhibition CreateExhibition() => Exhibition.Create(Guid.NewGuid(), "TestExhibition", CreatedAt);
