@@ -34,8 +34,12 @@ builder.Services.AddCors(options =>
 // JWT login: read Issuer and Audience from appsettings.json, and the secret Key from user-secrets
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is missing. Set it with dotnet user-secrets.");
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:Key is missing or too short (min. 32 characters). Set it with dotnet user-secrets, or JWT_KEY in .env for Docker.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
