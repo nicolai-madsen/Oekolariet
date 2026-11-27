@@ -166,6 +166,9 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("datetime2");
 

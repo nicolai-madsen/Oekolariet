@@ -37,9 +37,11 @@ public sealed class SubmitAnswerHandler(
 
         bool isCorrect;
 
+        var answeredAtUtc = clock.GetUtcNow().UtcDateTime;
+
         try
         {
-            isCorrect = game.SubmitAnswer(item, categoryId, clock.GetUtcNow().UtcDateTime);
+            isCorrect = game.SubmitAnswer(item, categoryId, answeredAtUtc);
         }
         catch (InvalidOperationException ex)
         {
@@ -47,10 +49,17 @@ public sealed class SubmitAnswerHandler(
             throw new ConflictException(ex.Message);
         }
 
-        await unitOfWork.SaveChangesAsync(ct);
-
         var answeredCount = game.Answers.Count;
         var totalCount = content.Items.Count;
+        var isGameCompleted = answeredCount == totalCount || game.HasExpired(answeredAtUtc);
+
+        if (isGameCompleted)
+        {
+            game.Complete(answeredAtUtc);
+        }
+
+        // Save the final answer and completion time in the same transaction.
+        await unitOfWork.SaveChangesAsync(ct);
 
         return new AnswerResultDto(
             IsCorrect: isCorrect,
@@ -58,6 +67,6 @@ public sealed class SubmitAnswerHandler(
             Explanation: item.Explanation,
             AnsweredCount: answeredCount,
             TotalCount: totalCount,
-            IsGameCompleted: answeredCount == totalCount);
+            IsGameCompleted: isGameCompleted);
     }
 }
