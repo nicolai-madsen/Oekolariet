@@ -65,13 +65,23 @@ else
     // Title and picture will come from the API when it exists
     private static readonly Slot[] Slots =
     [
-        new("hierarchy", "/hierarchyPage", "images/green-postit.png", -1),
-        new("quiz", "/quizPage", "images/yellow-postit.png", 1),
-        new("journeys", "/journeyPage", "images/blue-postit.png", 1),
-        new("offers", "/infoPage", "images/pink-postit.png", -1),
+        new("Hierarchy", "/hierarchyPage", "images/green-postit.png", -1),
+        new("Quiz", "/quizPage", "images/yellow-postit.png", 1),
+        new("Journey", "/journeyPage", "images/blue-postit.png", 1),
+        new("Offer", "/infoPage", "images/pink-postit.png", -1),
     ];
     private IEnumerable<Area> Areas => Slots.Select(slot =>
-        new Area(Title: "", slot.Url, slot.Paper, Art: null, slot.Tilt));
+    {
+        var tile = _version?.Tiles.FirstOrDefault(t =>
+            string.Equals(t.Type, slot.Key, StringComparison.OrdinalIgnoreCase));
+
+        return new Area(
+            Title: tile?.Title ?? "",
+            slot.Url,
+            slot.Paper,
+            Art: null,
+            slot.Tilt);
+    });
 
     // Media from the API once GET /media/{id} exists
     private string OttoImage =>
