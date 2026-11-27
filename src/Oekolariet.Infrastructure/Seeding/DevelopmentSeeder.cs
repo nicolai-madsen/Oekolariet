@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Oekolariet.Domain.Aggregates.Exhibitions;
 using Oekolariet.Domain.Content;
+using Oekolariet.Domain.Aggregates.Editors;
+using Oekolariet.Infrastructure.Security;
 
 namespace Oekolariet.Infrastructure.Seeding;
 
@@ -10,7 +12,9 @@ internal static class DevelopmentSeeder
     {
         var db = (OekolarietDbContext)context;
 
-        if (await db.Exhibitions.AnyAsync(e => e.Id == SeedIds.Exhibition, ct))
+        await SeedTestEditorAsync(db, ct);
+
+        if (await db.Exhibitions.AnyAsync(e => e.Id == SeedIds.Exhibition, ct)) // The exhibition is already seeded (from an earlier start), so stop here
         {
             return;
         }
@@ -61,6 +65,27 @@ internal static class DevelopmentSeeder
     public static void Seed(DbContext context)
     {
         SeedAsync(context, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    // A test editor for development, so we can try the login. Never used in production.
+    private static async Task SeedTestEditorAsync(OekolarietDbContext db, CancellationToken ct)
+    {
+        // Already there from an earlier start? Then do nothing.
+        if (await db.Editors.AnyAsync(e => e.Id == SeedIds.Editor, ct))
+        {
+            return;
+        }
+
+        // The password is hashed the same way as for real editors.
+        // "Udvikling123!" is a test password for development only. Real passwords are never written in code.
+        var hasher = new IdentityPasswordHasher();
+        var passwordHash = hasher.Hash("Udvikling123!");
+
+        // Goes through the Domain, so the seed follows the same rules as real data
+        var editor = Editor.Create(SeedIds.Editor, "admin@oekolariet.test", passwordHash, DateTime.UtcNow);
+
+        db.Editors.Add(editor);
+        await db.SaveChangesAsync(ct);
     }
 }
 
