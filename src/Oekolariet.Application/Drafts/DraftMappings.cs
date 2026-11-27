@@ -20,6 +20,7 @@ internal static class DraftMappings
             draft.UpdatedBy,
             draft.Content.Theme.ToDto(), // From ContentMappings
             draft.Content.Pages.ToDtos(), // FRom ContentMappings
+            draft.Content.Tiles.ToDtos(), // From ContentMappings
             draft.Content.Game.ToEditorDto());
 
     // Editor version WITH CorrectCategoryId + Explanation, used for editing the game in the draft.

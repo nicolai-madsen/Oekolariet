@@ -9,4 +9,5 @@ public sealed record DraftDto(
     string UpdatedBy,
     ThemeDto Theme,
     IReadOnlyList<PageDto> Pages,
+    IReadOnlyList<TileDto> Tiles,
     EditorGameDto Game); // Just the basis type, so the "type" gets added in Json automatically

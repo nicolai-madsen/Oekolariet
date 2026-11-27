@@ -6,7 +6,8 @@ public sealed record ActiveVersionDto(
     int VersionNumber,
     DateTime PublishedAt,
     ThemeDto Theme,
-    IReadOnlyList<PageDto> Pages);
+    IReadOnlyList<PageDto> Pages,
+    IReadOnlyList<TileDto> Tiles);
 
 public sealed record ThemeDto(
     string PrimaryColor,
@@ -21,4 +22,9 @@ public sealed record PageDto(
     string Layout,   // store as a string, not the enum type, according to our api specification
     string Title,
     string Body,
+    Guid? MediaId);
+
+public sealed record TileDto(
+    string Type,     // store as a string, not the enum type, according to our api specification
+    string? Title,
     Guid? MediaId);

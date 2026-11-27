@@ -18,6 +18,10 @@ internal static class ContentMappings
             .Select(p => new PageDto(p.Id, p.Order, p.Layout.ToString(), p.Title, p.Body, p.MediaId))
             .ToList();
 
+    public static List<TileDto> ToDtos(this IReadOnlyList<Tile> tiles) =>
+        tiles
+            .Select(t => new TileDto(t.Type.ToString(), t.Title, t.MediaId))
+            .ToList();
     public static CategoryDto ToDto(this Category category) =>
         new(category.Id, category.Name, category.MediaId);
 }

@@ -32,6 +32,8 @@ public sealed class GetActiveVersionHandler(IExhibitionRepository exhibitions, I
             version.VersionNumber,
             version.PublishedAt,
             version.Content.Theme.ToDto(),
-            version.Content.Pages.ToDtos());
+            version.Content.Pages.ToDtos(),
+            version.Content.Tiles.ToDtos()
+            );
     }
 }

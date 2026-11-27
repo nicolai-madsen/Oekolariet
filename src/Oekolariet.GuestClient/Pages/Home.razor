@@ -35,7 +35,7 @@ else
 
             <RadzenColumn Size="12" SizeMD="8">
                 <RadzenRow Gap="1.5rem" AlignItems="AlignItems.Start">
-                    @foreach (var area in _areas)
+                    @foreach (var area in Areas)
                     {
                         <RadzenColumn Size="6">
                             <RadzenLink Path="@area.Url" class="note" Style="@($"--tilt: {area.Tilt}deg;")">
@@ -61,14 +61,27 @@ else
     // The first page from the API is the welcome text (title, body and optional picture).
     private PageDto? _welcome => _version?.Pages.OrderBy(p => p.Order).FirstOrDefault();
 
-    // Temporary: all papers use the same file until the coloured ones are ready.
-    private readonly List<Area> _areas =
+    // Only design, the post-its are permanent 
+    // Title and picture will come from the API when it exists
+    private static readonly Slot[] Slots =
     [
-        new("Affaldshierarkiet", "/affaldshierarkiet", "images/green-postit.png", "images/otto-walk.png", -1),
-    new("Sorteringsquizzen", "/sorteringsquiz", "images/yellow-postit.png", null, 1),
-    new("Materialernes rejse", "/materialerejser", "images/blue-postit.png", null, 1),
-    new("RessourceCenter Vejles tilbud", "/ressourcecenter", "images/pink-postit.png", null, -1),
+        new("Hierarchy", "", "images/green-postit.png", -1),
+        new("Quiz", "/sorteringsquiz", "images/yellow-postit.png", 1),
+        new("Journey", "", "images/blue-postit.png", 1),
+        new("Offer", "", "images/pink-postit.png", -1),
     ];
+    private IEnumerable<Area> Areas => Slots.Select(slot =>
+    {
+        var tile = _version?.Tiles.FirstOrDefault(t =>
+            string.Equals(t.Type, slot.Key, StringComparison.OrdinalIgnoreCase));
+
+        return new Area(
+            Title: tile?.Title ?? "",
+            slot.Url,
+            slot.Paper,
+            Art: null,
+            slot.Tilt);
+    });
 
     // Media from the API once GET /media/{id} exists
     private string OttoImage =>
@@ -96,7 +109,9 @@ else
             _error = $"Kunne ikke hente udstillingen ({ex.StatusCode}).";
         }
     }
+    private sealed record Slot(string Key, string Url, string Paper, int Tilt);
 
     private sealed record Area(string Title, string Url, string Paper, string? Art, int Tilt);
+
 
 }
