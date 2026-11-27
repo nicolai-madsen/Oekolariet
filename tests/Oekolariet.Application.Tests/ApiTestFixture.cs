@@ -74,6 +74,7 @@ public sealed class ApiTestFixture : IAsyncLifetime
             .Where(game => game.Id == gameId)
             .Select(game => game.AvatarKey)
             .SingleAsync();
+    }
     public async Task<Guid> PublishVersionAsync(Guid exhibitionId, ExhibitionContent content)
     {
         var factory = _factory ?? throw new InvalidOperationException("The test API has not started.");
