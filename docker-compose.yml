@@ -29,6 +29,8 @@ services:
       ConnectionStrings__Oekolariet: "Server=db;Database=Oekolariet;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
       # CORS: allow the GuestClient (browser on localhost:5000) to call the API
       Cors__AllowedOrigins__0: "http://localhost:5000"
+      # The secret key for login tokens, from .env (never written here)
+      Jwt__Key: "${JWT_KEY}"
     ports:
       - "8080:8080" # PC:container
     depends_on:

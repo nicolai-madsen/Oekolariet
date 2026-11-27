@@ -4,6 +4,7 @@ using Oekolariet.Domain.Aggregates.Exhibitions;
 using Oekolariet.Domain.Aggregates.ExhibitionVersions;
 using Oekolariet.Infrastructure.Converters;
 using Oekolariet.Domain.Aggregates.Games;
+using Oekolariet.Domain.Aggregates.Editors;
 
 namespace Oekolariet.Infrastructure;
 
@@ -13,6 +14,7 @@ public sealed class OekolarietDbContext(DbContextOptions<OekolarietDbContext> op
     public DbSet<Game> Games => Set<Game>();
     public DbSet<ExhibitionVersion> ExhibitionVersions => Set<ExhibitionVersion>();
     public DbSet<Draft> Drafts => Set<Draft>();
+    public DbSet<Editor> Editors => Set<Editor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

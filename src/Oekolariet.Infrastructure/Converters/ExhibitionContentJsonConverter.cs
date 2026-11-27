@@ -12,5 +12,7 @@ public sealed class ExhibitionContentJsonConverter() : ValueConverter<Exhibition
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter() },
+        RespectNullableAnnotations = true, // "game": If null -> JsonException
+        RespectRequiredConstructorParameters = true, // "game": If missing -> JsonException
     };
 }
