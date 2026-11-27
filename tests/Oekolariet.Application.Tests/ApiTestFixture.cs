@@ -6,6 +6,7 @@ using Oekolariet.Domain.Content;
 using Oekolariet.Infrastructure;
 using Oekolariet.Shared.Auth;
 using Testcontainers.MsSql;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Oekolariet.Api.Tests;
@@ -61,6 +62,18 @@ public sealed class ApiTestFixture : IAsyncLifetime
         return exhibition.Id;
     }
 
+    public async Task<string> GetSavedAvatarKeyAsync(Guid gameId)
+    {
+        var factory = _factory ?? throw new InvalidOperationException("The test API has not started.");
+
+        // Read through a fresh DbContext to verify what the API actually saved.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OekolarietDbContext>();
+
+        return await db.Games
+            .Where(game => game.Id == gameId)
+            .Select(game => game.AvatarKey)
+            .SingleAsync();
     public async Task<Guid> PublishVersionAsync(Guid exhibitionId, ExhibitionContent content)
     {
         var factory = _factory ?? throw new InvalidOperationException("The test API has not started.");

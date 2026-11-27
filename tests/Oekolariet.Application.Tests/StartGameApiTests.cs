@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Oekolariet.Infrastructure.Seeding;
 using Oekolariet.Shared.Games;
 
 namespace Oekolariet.Api.Tests;
@@ -84,5 +85,22 @@ public sealed class StartGameApiTests(ApiTestFixture fixture)
             Assert.False(item.TryGetProperty("explanation", out _), "ADR-0003: Guest must not recive explanations");
         }
 
+    }
+    [Fact]
+    public async Task StartGame_WithSelectedAvatar_PersistsAvatarKeyOnCreatedGame()
+    {
+        // A different avatar catches a regression where every game is saved with "odder".
+        const string SelectedAvatarKey = "pindsvin";
+        var request = new StartGameRequest(SeedIds.Exhibition, SelectedAvatarKey);
+
+        using var response = await fixture.Client.PostAsJsonAsync("/api/v1/games", request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<GameDto>();
+        var game = Assert.IsType<SortingGameDto>(result);
+
+        var savedAvatarKey = await fixture.GetSavedAvatarKeyAsync(game.GameId);
+        Assert.Equal(SelectedAvatarKey, savedAvatarKey);
     }
 }
