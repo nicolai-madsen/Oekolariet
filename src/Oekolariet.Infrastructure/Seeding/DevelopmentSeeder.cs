@@ -35,8 +35,8 @@ internal static class DevelopmentSeeder
             [
                 new Tile(TileType.Hierarchy, "Affaldshierarkiet", MediaId: null),
                 new Tile(TileType.Quiz, "Sorteringsquizzen", MediaId: null),
-                new Tile(TileType.Journeys, "Materialernes rejse", MediaId: null),
-                new Tile(TileType.Offers, "RessourceCenter Vejles tilbud", MediaId: null),
+                new Tile(TileType.Journey, "Materialernes rejse", MediaId: null),
+                new Tile(TileType.Offer, "RessourceCenter Vejles tilbud", MediaId: null),
             ],
             new SortingGame(
                 Title: "Sorter affaldet",

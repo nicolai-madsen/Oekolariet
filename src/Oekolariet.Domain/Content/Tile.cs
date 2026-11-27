@@ -11,6 +11,5 @@ public enum TileType
     Hierarchy,
     Quiz,
     Journey,
-    Offer,
-    Back
+    Offer
 }

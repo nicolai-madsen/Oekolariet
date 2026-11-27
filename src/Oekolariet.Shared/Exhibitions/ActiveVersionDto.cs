@@ -6,7 +6,8 @@ public sealed record ActiveVersionDto(
     int VersionNumber,
     DateTime PublishedAt,
     ThemeDto Theme,
-    IReadOnlyList<PageDto> Pages);
+    IReadOnlyList<PageDto> Pages,
+    IReadOnlyList<TileDto> Tiles);
 
 public sealed record ThemeDto(
     string PrimaryColor,

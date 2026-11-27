@@ -651,6 +651,15 @@ components:
         title: { type: string, minLength: 1, maxLength: 75 }
         body: { type: string, maxLength: 2000 }
         mediaId: { type: [string, "null"], format: uuid }
+    TileDto:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [Hierarchy, Quiz, Journey, Offer]
+        title: { type: [string, "null"] }
+        mediaId: { type: [string, "null"], format: uuid }
     GameType:
       type: string
       enum: [Sorting]
@@ -667,13 +676,16 @@ components:
     #//////////////////////////////
     ActiveVersionDto:
       type: object
-      required: [exhibitionId, versionId, versionNumber, publishedAt, theme, pages, game]
+      required: [exhibitionId, versionId, versionNumber, publishedAt, theme, pages, tiles, game]
       properties:
         exhibitionId: { type: string, format: uuid }
         versionId: { type: string, format: uuid }
         versionNumber: { type: integer, minimum: 1 }
         publishedAt: { type: string, format: date-time }
         theme: { $ref: "#/components/schemas/Theme" }
+        tiles:
+          type: array
+          items: { $ref: "#/components/schemas/TileDto" }
         pages:
           type: array
           items: { $ref: "#/components/schemas/Page" }
@@ -781,13 +793,17 @@ components:
     # ─── CMS: draft & versions (WITH correct answers) ───
     DraftDto:
       type: object
-      required: [theme, pages, game]
+      required: [theme, pages, tiles, game]
       properties:
         exhibitionId: { type: string, format: uuid, readOnly: true }
         basedOnVersionId: { type: [string, "null"], format: uuid, readOnly: true }
         updatedAt: { type: string, format: date-time, readOnly: true }
         updatedBy: { type: string, readOnly: true }
         theme: { $ref: "#/components/schemas/Theme" }
+        tiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/TileDto"
         pages:
           type: array
           items: { $ref: "#/components/schemas/Page" }
@@ -838,7 +854,7 @@ components:
 
     VersionDto:
       type: object
-      required: [exhibitionId, versionId, versionNumber, publishedAt, publishedBy, theme, pages, game]
+      required: [exhibitionId, versionId, versionNumber, publishedAt, publishedBy, theme, pages, tiles, game]
       properties:
         exhibitionId: { type: string, format: uuid }
         versionId: { type: string, format: uuid }
@@ -849,6 +865,9 @@ components:
         pages:
           type: array
           items: { $ref: "#/components/schemas/Page" }
+        tiles:
+          type: array
+          items: { $ref: "#/components/schemas/TileDto" }
         game: { $ref: "#/components/schemas/EditorGame" }
 
     # ─── Media ───
