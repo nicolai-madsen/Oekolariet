@@ -65,10 +65,10 @@ else
     // Title and picture will come from the API when it exists
     private static readonly Slot[] Slots =
     [
-        new("Hierarchy", "/hierarchyPage", "images/green-postit.png", -1),
-        new("Quiz", "/quizPage", "images/yellow-postit.png", 1),
-        new("Journey", "/journeyPage", "images/blue-postit.png", 1),
-        new("Offer", "/infoPage", "images/pink-postit.png", -1),
+        new("Hierarchy", "", "images/green-postit.png", -1),
+        new("Quiz", "/sorteringsquiz", "images/yellow-postit.png", 1),
+        new("Journey", "", "images/blue-postit.png", 1),
+        new("Offer", "", "images/pink-postit.png", -1),
     ];
     private IEnumerable<Area> Areas => Slots.Select(slot =>
     {
