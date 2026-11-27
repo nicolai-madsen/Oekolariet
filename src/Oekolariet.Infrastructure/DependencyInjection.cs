@@ -7,6 +7,8 @@ using Oekolariet.Application.Games;
 using Oekolariet.Infrastructure.Persistence;
 using Oekolariet.Infrastructure.Repositories;
 using Oekolariet.Infrastructure.Seeding;
+using Oekolariet.Application.Auth;
+using Oekolariet.Infrastructure.Security;
 
 
 namespace Oekolariet.Infrastructure;
@@ -33,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IGameRepository, GameRepository>();
         services.AddScoped<IGuestNumberGenerator, GuestNumberGenerator>();
+        services.AddScoped<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddScoped<IEditorRepository, EditorRepository>();
 
         return services;
     }

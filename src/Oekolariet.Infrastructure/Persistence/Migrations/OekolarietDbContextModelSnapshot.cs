@@ -50,6 +50,32 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                     b.ToTable("Drafts", (string)null);
                 });
 
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Editors.Editor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Editors", (string)null);
+                });
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.ExhibitionVersions.ExhibitionVersion", b =>
                 {
                     b.Property<Guid>("Id")

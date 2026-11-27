@@ -1,7 +1,10 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Oekolariet.Domain.Aggregates.Exhibitions;
 using Oekolariet.Domain.Content;
 using Oekolariet.Infrastructure;
+using Oekolariet.Shared.Auth;
 using Testcontainers.MsSql;
 
 
@@ -17,12 +20,31 @@ public sealed class ApiTestFixture : IAsyncLifetime
 
     public HttpClient Client { get; private set; } = null!; // The HTTP client for sending requests to the test API.
 
+    // A client that is logged in as the test editor (from the Development seed), for CMS endpoints
+    public HttpClient EditorClient { get; private set; } = null!;
+
     public async Task InitializeAsync() // Start the SQL Server container and the test API host.
     {
         await _database.StartAsync();
 
         _factory = new ApiFactory(_database.GetConnectionString());
         Client = _factory.CreateClient();
+
+        EditorClient = _factory.CreateClient();
+        var token = await LoginAsTestEditorAsync();
+        EditorClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    // Logs in as the test editor and returns the token.
+    // This email and password are the development test editor from DevelopmentSeeder (not a real account).
+    private async Task<string> LoginAsTestEditorAsync()
+    {
+        var request = new LoginRequestDto("admin@oekolariet.test", "Udvikling123!");
+        using var response = await Client.PostAsJsonAsync("/api/v1/auth/login", request);
+        response.EnsureSuccessStatusCode();
+
+        var login = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+        return login!.AccessToken;
     }
 
     public async Task<Guid> CreateUnpublishedExhibitionAsync() // Create an unpublished exhibition in the test database and return its ID.
