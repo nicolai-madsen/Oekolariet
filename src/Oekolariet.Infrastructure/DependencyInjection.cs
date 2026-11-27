@@ -9,6 +9,7 @@ using Oekolariet.Infrastructure.Repositories;
 using Oekolariet.Infrastructure.Seeding;
 using Oekolariet.Application.Auth;
 using Oekolariet.Infrastructure.Security;
+using Oekolariet.Application.Avatars;
 
 
 namespace Oekolariet.Infrastructure;
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IGuestNumberGenerator, GuestNumberGenerator>();
         services.AddScoped<IPasswordHasher, IdentityPasswordHasher>();
         services.AddScoped<IEditorRepository, EditorRepository>();
+        services.AddScoped<IAvatarRepository, AvatarRepository>();
 
         return services;
     }
