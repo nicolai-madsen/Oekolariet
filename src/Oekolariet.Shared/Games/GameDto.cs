@@ -7,12 +7,14 @@ namespace Oekolariet.Shared.Games;
 public abstract record GameDto(
     Guid GameId,
     Guid VersionId,
-    DateTime EndsAtUtc);
+    DateTime EndsAtUtc,
+    int GuestNumber);
 
 public sealed record SortingGameDto(
     Guid GameId,
     Guid VersionId,
     DateTime EndsAtUtc,
+    int GuestNumber,
     IReadOnlyList<CategoryDto> Categories,
     IReadOnlyList<GuestItemDto> Items)
-    : GameDto(GameId, VersionId, EndsAtUtc);
+    : GameDto(GameId, VersionId, EndsAtUtc, GuestNumber);

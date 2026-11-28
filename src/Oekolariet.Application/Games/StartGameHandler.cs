@@ -70,6 +70,7 @@ public sealed class StartGameHandler(
         game.Id,
         game.VersionId,
         game.EndsAt,
+        game.GuestNumber,
         content.Categories
             .Select(category => category.ToDto())
             .ToList(),
