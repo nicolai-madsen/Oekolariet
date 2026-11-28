@@ -60,20 +60,22 @@ public sealed class StartGameHandler(
         games.Add(game);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return ToDto(game.Id, versionId, content);
+        return ToDto(game, content);
     }
 
     // Returns a GameDto (the base type), so the JSON gets the "type": "Sorting"
     // This Dto is for the guest, so it does NOT include CorrectCategoryId or Explanation.
-    private static GameDto ToDto(Guid gameId, Guid versionId, SortingGame content) =>
-        new SortingGameDto(
-            gameId,
-            versionId,
-            content.Categories
-                .Select(c => c.ToDto())
-                .ToList(),
-            content.Items
-            // ADR-0003: CorrectCategoryId and Explanation are NOT mapped
-                .Select(i => new GuestItemDto(i.Id, i.Name, i.MediaId))
-                .ToList());
+    private static GameDto ToDto(Game game, SortingGame content) =>
+    new SortingGameDto(
+        game.Id,
+        game.VersionId,
+        game.EndsAt,
+        game.GuestNumber,
+        content.Categories
+            .Select(category => category.ToDto())
+            .ToList(),
+        // ADR-0003: Only expose item details the guest may see before answering.
+        content.Items
+            .Select(item => new GuestItemDto(item.Id, item.Name, item.MediaId))
+            .ToList());
 }

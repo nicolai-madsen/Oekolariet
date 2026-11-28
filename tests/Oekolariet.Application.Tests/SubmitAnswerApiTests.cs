@@ -76,4 +76,62 @@ public sealed class SubmitAnswerApiTests(ApiTestFixture fixture)
         Assert.True(result.IsCorrect);
         Assert.Equal(plastic.Id, result.CorrectCategoryId);
     }
+
+    [Fact]
+    public async Task SubmitAnswer_OnlyFinalAnswerAddsRoundToHighscoresWithFinalScore()
+    {
+        var request = new StartGameRequest(SeedIds.Exhibition, "pindsvin");
+
+        using var startResponse = await fixture.Client.PostAsJsonAsync(
+            "/api/v1/games", request);
+
+        Assert.Equal(HttpStatusCode.Created, startResponse.StatusCode);
+
+        var result = await startResponse.Content.ReadFromJsonAsync<GameDto>();
+        var game = Assert.IsType<SortingGameDto>(result);
+
+        // A round needs at least two items to test the state between answers.
+        Assert.True(game.Items.Count >= 2);
+
+        var answersUrl = $"/api/v1/games/{game.GameId}/answers";
+        var highscoresUrl = $"/api/v1/games/{game.GameId}/highscores";
+        var categoryId = game.Categories.First().Id;
+        var expectedScore = 0;
+
+        for (var index = 0; index < game.Items.Count; index++)
+        {
+            var item = game.Items[index];
+            var isFinalAnswer = index == game.Items.Count - 1;
+
+            using var answerResponse = await fixture.Client.PostAsJsonAsync(
+                answersUrl, new AnswerRequest(item.Id, categoryId));
+
+            Assert.Equal(HttpStatusCode.OK, answerResponse.StatusCode);
+
+            var answer = await answerResponse.Content.ReadFromJsonAsync<AnswerResultDto>();
+            Assert.NotNull(answer);
+            Assert.Equal(isFinalAnswer, answer.IsGameCompleted);
+
+            if (answer.IsCorrect)
+            {
+                expectedScore += 10;
+            }
+
+            var highscores = await fixture.Client
+                .GetFromJsonAsync<List<HighscoreEntryDto>>(highscoresUrl);
+
+            Assert.NotNull(highscores);
+
+            if (isFinalAnswer)
+            {
+                var entry = Assert.Single(highscores, row => row.GuestNumber == game.GuestNumber);
+                Assert.Equal(expectedScore, entry.Score);
+                Assert.Equal("pindsvin", entry.AvatarKey);
+            }
+            else
+            {
+                Assert.DoesNotContain(highscores, row => row.GuestNumber == game.GuestNumber);
+            }
+        }
+    }
 }

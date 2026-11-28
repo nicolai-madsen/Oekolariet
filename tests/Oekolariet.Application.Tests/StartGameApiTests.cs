@@ -20,6 +20,7 @@ public sealed class StartGameApiTests(ApiTestFixture fixture)
             exhibitionId = Guid.Parse("9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001"),
             avatarKey = "odder"
         };
+        var beforeStartUtc = DateTime.UtcNow;
 
         using var response = await fixture.Client.PostAsJsonAsync("/api/v1/games", request); // Start a game for the published exhibition.
 
@@ -30,6 +31,9 @@ public sealed class StartGameApiTests(ApiTestFixture fixture)
         Assert.NotEqual(Guid.Empty, sorting.GameId);
         Assert.NotEmpty(sorting.Categories);
         Assert.NotEmpty(sorting.Items);
+        Assert.Equal(DateTimeKind.Utc, sorting.EndsAtUtc.Kind);
+        Assert.True(sorting.EndsAtUtc > beforeStartUtc);
+        Assert.True(sorting.GuestNumber > 0);
     }
 
     [Fact]

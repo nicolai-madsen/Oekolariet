@@ -1,0 +1,67 @@
+@implements IDisposable
+
+<div role="timer" aria-label="Tid tilbage"
+	 style="width: 100%; text-align: center;">
+	<div>Tid tilbage</div>
+	<strong style="font-size: 2rem; font-variant-numeric: tabular-nums;">
+		@remainingSeconds sek.
+	</strong>
+</div>
+
+@code {
+	[Parameter, EditorRequired]
+	public DateTime EndsAtUtc { get; set; }
+
+	[Parameter]
+	public EventCallback OnExpired { get; set; }
+
+	private readonly PeriodicTimer timer = new(TimeSpan.FromMilliseconds(250));
+	private int remainingSeconds;
+	private bool disposed;
+
+	protected override void OnParametersSet()
+	{
+		remainingSeconds = GetRemainingSeconds();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender)
+		{
+			return;
+		}
+
+		while (remainingSeconds > 0)
+		{
+			// Leaving the quiz disposes the timer and ends the wait.
+			if (!await timer.WaitForNextTickAsync())
+			{
+				return;
+			}
+
+			var seconds = GetRemainingSeconds();
+			if (seconds != remainingSeconds)
+			{
+				remainingSeconds = seconds;
+				StateHasChanged();
+			}
+		}
+
+		if (!disposed)
+		{
+			await OnExpired.InvokeAsync();
+		}
+	}
+
+	private int GetRemainingSeconds()
+	{
+		var remaining = EndsAtUtc - DateTime.UtcNow;
+		return Math.Max(0, (int)Math.Ceiling(remaining.TotalSeconds));
+	}
+
+	public void Dispose()
+	{
+		disposed = true;
+		timer.Dispose();
+	}
+}

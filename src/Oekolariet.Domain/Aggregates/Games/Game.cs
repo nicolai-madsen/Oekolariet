@@ -10,6 +10,7 @@ public sealed class Game
     public string AvatarKey { get; private set; } = string.Empty;
     public DateTime StartedAt { get; private set; }
     public DateTime EndsAt { get; private set; }
+    public DateTime? CompletedAtUtc { get; private set; }
     public int Score { get; private set; }
     private const int PointsPerCorrectAnswer = 10;
     private readonly List<GameAnswer> _answers = [];
@@ -63,6 +64,12 @@ public sealed class Game
     }
 
     public bool HasExpired(DateTime nowUtc) => nowUtc >= EndsAt; // The game is still valid at the exact deadline, but not after.
+
+    public void Complete(DateTime completedAtUtc)
+    {
+        // Keep the finish time from the first completion.
+        CompletedAtUtc ??= completedAtUtc;
+    }
 
     // Returns true if the answer was correct, false if it was incorrect.
     public bool SubmitAnswer(SortingItem item, Guid selectedCategoryId, DateTime answeredAtUtc)

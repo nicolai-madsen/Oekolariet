@@ -9,70 +9,109 @@
 @inject HttpClient Http
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <PageTitle>Sortér affaldet</PageTitle>
 
-<RadzenStack Gap="1rem" Style="max-width: 40rem;">
-	<h1>Sortér affaldet</h1>
+@if (ShowingResult && game is not null)
+{
+	<RadzenStack Gap="1rem" Style="max-width: 40rem; margin: 0 auto;">
+		<QuizResult @key="game.GameId"
+					GameId="@game.GameId"
+					GuestNumber="@game.GuestNumber"
+					GetAvatarUrl="@GetAvatarUrl" />
 
-	@if (currentItem is null)
-	{
-		<h2>Vælg din avatar</h2>
+		<RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+			<RadzenButton Text="Spil igen"
+						  Click="@ShowAvatarSelection"
+						  Style="flex: 1;" />
 
-		<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-			@foreach (var avatar in Avatars)
-			{
-				var isSelected = selectedAvatarKey == avatar.Key;
+			<RadzenButton Text="Tilbage til forsiden"
+						  ButtonStyle="ButtonStyle.Secondary"
+						  Click="@GoToFrontPage"
+						  Style="flex: 1;" />
+		</RadzenStack>
+	</RadzenStack>
+}
 
-				<button @key="avatar.Key"
-						type="button"
-						disabled="@isBusy"
-						aria-pressed="@(isSelected ? "true" : "false")"
-						@onclick="() => SelectAvatar(avatar.Key)"
-						style="padding: 0.5rem; border-radius: 0.75rem; background: white;
-					border: 3px solid @(isSelected ? "#356344" : "#ccc");">
-					<img src="@($"images/Avatars/{avatar.FileName}")"
-						 alt=""
-						 width="80"
-						 height="80"
-						 style="display: block; object-fit: contain;" />
-					<span>@avatar.Name</span>
-				</button>
-			}
+<div hidden="@ShowingResult">
+	<RadzenStack Gap="1rem" Style="max-width: 40rem;">
+		<h1>Sortér affaldet</h1>
+
+		@if (currentItem is null)
+		{
+			<h2>Vælg din avatar</h2>
+
+			<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+				@foreach (var avatar in Avatars)
+				{
+					var isSelected = selectedAvatarKey == avatar.Key;
+
+					<button @key="avatar.Key"
+							type="button"
+							disabled="@isBusy"
+							aria-pressed="@(isSelected ? "true" : "false")"
+							@onclick="() => SelectAvatar(avatar.Key)"
+							style="padding: 0.5rem; border-radius: 0.75rem; background: white;
+						border: 3px solid @(isSelected ? "#356344" : "#ccc");">
+						<img src="@($"images/Avatars/{avatar.FileName}")"
+							 alt=""
+							 width="80"
+							 height="80"
+							 style="display: block; object-fit: contain;" />
+						<span>@avatar.Name</span>
+					</button>
+				}
+			</div>
+
+			<RadzenButton Text="Start spil"
+						  Click="@StartGameAsync"
+						  Disabled="@(isBusy || selectedAvatarKey is null)" />
+		}
+		else if (game is not null)
+		{
+			<QuizCountdown @key="game.GameId"
+						   EndsAtUtc="@game.EndsAtUtc"
+						   OnExpired="@CompleteExpiredGameAsync" />
+
+			<p>Træk genstanden hen til den rigtige spand.</p>
+		}
+
+		@* Keep the same element between items so its pointer handlers stay attached. *@
+		<div @ref="itemElement"
+			 hidden="@(currentItem is null)"
+			 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
+			<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
+				@currentItem?.Name
+			</RadzenCard>
 		</div>
 
-		<RadzenButton Text="Start spil"
-					  Click="@StartGameAsync"
-					  Disabled="@(isBusy || selectedAvatarKey is null)" />
-	}
-	else
-	{
-		<p>Træk genstanden hen til den rigtige spand.</p>
-	}
+		@if (currentItem is not null && game is not null)
+		{
+			<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+				@foreach (var category in game.Categories)
+				{
+					<div @key="category.Id" data-bin="@category.Id" style="@BinStyle">
+						<strong>@category.Name</strong>
+					</div>
+				}
+			</RadzenStack>
 
-	@* Keep the same element between items so its pointer handlers stay attached. *@
-	<div @ref="itemElement"
-		 hidden="@(currentItem is null)"
-		 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
-		<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
-			@currentItem?.Name
-		</RadzenCard>
-	</div>
+			<RadzenButton Text="Afbryd spil"
+						  ButtonStyle="ButtonStyle.Secondary"
+						  Click="@GoToFrontPage" />
+		}
 
-	@if (currentItem is not null && game is not null)
-	{
-		<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-			@foreach (var category in game.Categories)
-			{
-				<div @key="category.Id" data-bin="@category.Id" style="@BinStyle">
-					<strong>@category.Name</strong>
-				</div>
-			}
-		</RadzenStack>
-	}
+		<p role="status">@feedback</p>
 
-	<p role="status">@feedback</p>
-</RadzenStack>
+		@if (retryCompletion)
+		{
+			<RadzenButton Text="Prøv igen"
+						  Click="@CompleteExpiredGameAsync"
+						  Disabled="@isBusy" />
+		}
+	</RadzenStack>
+</div>
 
 @code {
 	private const string BinStyle =
@@ -98,33 +137,65 @@
 	private SortingGameDto? game;
 	private Queue<GuestItemDto> remainingItems = new();
 	private GuestItemDto? currentItem;
-	private bool isBusy;
 	private string feedback = string.Empty;
+
+	private bool isBusy;
+	private bool expiryPending;
+	private bool retryCompletion;
+	private bool disposed;
+
+	private bool ShowingResult => game is not null && currentItem is null;
 
 	private void SelectAvatar(string key)
 	{
 		selectedAvatarKey = key;
 	}
 
+	private string GetAvatarUrl(string avatarKey)
+	{
+		var avatar = Avatars.First(option => option.Key == avatarKey);
+		return $"images/Avatars/{avatar.FileName}";
+	}
+
+	private void ShowAvatarSelection()
+	{
+		game = null;
+		feedback = string.Empty;
+	}
+
+	private void GoToFrontPage()
+	{
+		Navigation.NavigateTo("/");
+	}
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (firstRender)
+		if (!firstRender)
 		{
-			dragModule = await JS.InvokeAsync<IJSObjectReference>(
-				"import", "./sortingGame.js");
-
-			componentReference = DotNetObjectReference.Create(this);
-
-			await dragModule.InvokeVoidAsync(
-				"enableImmediateDrag", itemElement, componentReference);
+			return;
 		}
+
+		var module = await JS.InvokeAsync<IJSObjectReference>(
+			"import", "./sortingGame.js");
+
+		if (disposed)
+		{
+			await module.DisposeAsync();
+			return;
+		}
+
+		dragModule = module;
+		componentReference = DotNetObjectReference.Create(this);
+
+		await module.InvokeVoidAsync(
+			"enableImmediateDrag", itemElement, componentReference);
 	}
 
 	private async Task StartGameAsync()
 	{
 		var avatarKey = selectedAvatarKey;
 
-		if (isBusy || avatarKey is null)
+		if (disposed || isBusy || avatarKey is null)
 		{
 			return;
 		}
@@ -153,6 +224,8 @@
 			}
 
 			game = sortingGame;
+			expiryPending = false;
+			retryCompletion = false;
 
 			// Shuffle once per round so each item is shown at most once.
 			var items = sortingGame.Items.ToArray();
@@ -176,8 +249,8 @@
 	[JSInvokable]
 	public async Task HandleBinDrop(string bin)
 	{
-		if (isBusy || game is null || currentItem is null ||
-			!Guid.TryParse(bin, out var categoryId))
+		if (disposed || isBusy || retryCompletion || game is null ||
+			currentItem is null || !Guid.TryParse(bin, out var categoryId))
 		{
 			return;
 		}
@@ -193,8 +266,8 @@
 
 			if (response.StatusCode == HttpStatusCode.Conflict)
 			{
-				currentItem = null;
-				feedback = "Tiden er udløbet, eller genstanden er allerede besvaret. Start en ny runde.";
+				// Keep the countdown mounted so it can finish an expired round.
+				feedback = "Svaret kunne ikke registreres.";
 				return;
 			}
 
@@ -231,12 +304,63 @@
 		finally
 		{
 			isBusy = false;
-			await InvokeAsync(StateHasChanged);
+
+			// Let the submitted answer finish before processing a timer expiry.
+			if (expiryPending)
+			{
+				expiryPending = false;
+				await CompleteExpiredGameAsync();
+			}
+
+			if (!disposed)
+			{
+				await InvokeAsync(StateHasChanged);
+			}
+		}
+	}
+
+	private async Task CompleteExpiredGameAsync()
+	{
+		if (disposed || game is null || currentItem is null)
+		{
+			return;
+		}
+
+		if (isBusy)
+		{
+			expiryPending = true;
+			return;
+		}
+
+		isBusy = true;
+		retryCompletion = false;
+
+		try
+		{
+			using var response = await Http.PostAsync(
+				$"api/v1/games/{game.GameId}/complete-expired", null);
+
+			response.EnsureSuccessStatusCode();
+
+			currentItem = null;
+			feedback = "Tiden er gået. Runden er slut.";
+		}
+		catch (HttpRequestException)
+		{
+			retryCompletion = true;
+			feedback = "Runden kunne ikke afsluttes. Prøv igen.";
+		}
+		finally
+		{
+			isBusy = false;
 		}
 	}
 
 	public async ValueTask DisposeAsync()
 	{
+		disposed = true;
+		expiryPending = false;
+
 		componentReference?.Dispose();
 
 		if (dragModule is not null)

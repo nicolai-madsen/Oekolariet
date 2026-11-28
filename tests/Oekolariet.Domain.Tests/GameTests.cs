@@ -76,4 +76,40 @@ public sealed class GameTests
 
         Assert.Equal(0, game.Score);
     }
+
+    [Fact]
+    public void Start_NewGame_HasNoCompletionTime()
+    {
+        var startedAtUtc = new DateTime(2026, 11, 28, 10, 0, 0, DateTimeKind.Utc);
+
+        var game = Game.Start(
+            id: Guid.NewGuid(),
+            versionId: Guid.NewGuid(),
+            guestNumber: 1,
+            avatarKey: "odder",
+            startedAtUtc: startedAtUtc,
+            duration: TimeSpan.FromSeconds(30));
+
+        Assert.Null(game.CompletedAtUtc);
+    }
+
+    [Fact]
+    public void Complete_CalledTwice_KeepsFirstCompletionTime()
+    {
+        var startedAtUtc = new DateTime(2026, 11, 28, 10, 0, 0, DateTimeKind.Utc);
+        var completedAtUtc = startedAtUtc.AddSeconds(20);
+
+        var game = Game.Start(
+            id: Guid.NewGuid(),
+            versionId: Guid.NewGuid(),
+            guestNumber: 1,
+            avatarKey: "odder",
+            startedAtUtc: startedAtUtc,
+            duration: TimeSpan.FromSeconds(30));
+
+        game.Complete(completedAtUtc);
+        game.Complete(completedAtUtc.AddSeconds(5));
+
+        Assert.Equal(completedAtUtc, game.CompletedAtUtc);
+    }
 }

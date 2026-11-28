@@ -24,6 +24,28 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
 
             modelBuilder.HasSequence<int>("GuestNumbers");
 
+            modelBuilder.Entity("Oekolariet.Domain.Aggregates.Avatars.Avatar", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("Avatars", (string)null);
+                });
+
             modelBuilder.Entity("Oekolariet.Domain.Aggregates.Drafts.Draft", b =>
                 {
                     b.Property<Guid>("ExhibitionId")
@@ -143,6 +165,9 @@ namespace Oekolariet.Infrastructure.Persistence.Migrations
                     b.Property<string>("AvatarKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("EndsAt")
                         .HasColumnType("datetime2");

@@ -1,12 +1,15 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Oekolariet.Domain.Aggregates.Exhibitions;
 using Oekolariet.Domain.Content;
 using Oekolariet.Infrastructure;
 using Oekolariet.Shared.Auth;
 using Testcontainers.MsSql;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 
 namespace Oekolariet.Api.Tests;
@@ -93,6 +96,21 @@ public sealed class ApiTestFixture : IAsyncLifetime
         return version.Id;
     }
 
+    public WebApplicationFactory<Program> CreateFactoryWithClock(TimeProvider clock)
+    {
+        var factory = _factory
+            ?? throw new InvalidOperationException("The test API has not started.");
+
+        return factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton<TimeProvider>(clock);
+            });
+        });
+    }
+
     public async Task DisposeAsync()
     {
         try
@@ -107,4 +125,6 @@ public sealed class ApiTestFixture : IAsyncLifetime
             await _database.DisposeAsync();
         }
     }
+
+
 }
