@@ -1,0 +1,139 @@
+@using System.Net.Http.Json
+@using Oekolariet.Shared.Games
+@inject HttpClient Http
+
+<section aria-label="Quizresultat">
+	@if (isLoading)
+	{
+		<p role="status">Henter resultatet …</p>
+	}
+	else if (loadFailed)
+	{
+		<p role="status">Resultatet kunne ikke hentes.</p>
+		<button type="button" @onclick="LoadScoresAsync">Prøv igen</button>
+	}
+	else
+	{
+		@if (ownEntry is not null)
+		{
+			<header style="text-align: center;">
+				<img src="@GetAvatarUrl(ownEntry.AvatarKey)"
+					 alt=""
+					 width="88"
+					 height="88"
+					 style="object-fit: contain;" />
+
+				<h1>Gæst #@ownEntry.GuestNumber</h1>
+				<p style="font-size: 1.5rem;">
+					<strong>@ownEntry.Score point</strong>
+				</p>
+			</header>
+		}
+
+		<h2>Dagens highscore</h2>
+		<p>Har I lige mange point? Så står den, der sidst blev færdig, øverst.</p>
+
+		@if (entries.Count == 0)
+		{
+			<p>Der er ingen resultater i dag.</p>
+		}
+		else
+		{
+			<table style="width: 100%; text-align: left; border-collapse: collapse;">
+				<thead>
+					<tr>
+						<th scope="col">Plads</th>
+						<th scope="col">Avatar</th>
+						<th scope="col">Gæst</th>
+						<th scope="col" style="text-align: right;">Point</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var (entry, place) in VisibleEntries())
+					{
+						<tr @key="entry.GuestNumber"
+							style="@(place > TopCount ? "border-top: 2px solid #52745c;" : null)">
+							<td>@(place).</td>
+							<td>
+								<img src="@GetAvatarUrl(entry.AvatarKey)"
+									 alt=""
+									 width="44"
+									 height="44"
+									 style="object-fit: contain;" />
+							</td>
+							<td>
+								Gæst #@entry.GuestNumber
+								@if (entry.GuestNumber == GuestNumber)
+								{
+									<strong> (dig)</strong>
+								}
+							</td>
+							<td style="text-align: right;">@entry.Score</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+	}
+</section>
+
+@code {
+	[Parameter, EditorRequired]
+	public Guid GameId { get; set; }
+
+	[Parameter, EditorRequired]
+	public int GuestNumber { get; set; }
+
+	[Parameter, EditorRequired]
+	public Func<string, string> GetAvatarUrl { get; set; } = default!;
+
+	private const int TopCount = 5;
+
+	private List<HighscoreEntryDto> entries = [];
+	private HighscoreEntryDto? ownEntry;
+	private int ownIndex;
+	private bool isLoading;
+	private bool loadFailed;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadScoresAsync();
+	}
+
+	private async Task LoadScoresAsync()
+	{
+		isLoading = true;
+		loadFailed = false;
+
+		try
+		{
+			entries = await Http.GetFromJsonAsync<List<HighscoreEntryDto>>(
+				$"api/v1/games/{GameId}/highscores") ?? [];
+
+			// Find the guest's position in the full ranking before showing the top five.
+			ownIndex = entries.FindIndex(entry => entry.GuestNumber == GuestNumber);
+			ownEntry = ownIndex >= 0 ? entries[ownIndex] : null;
+		}
+		catch (HttpRequestException)
+		{
+			loadFailed = true;
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+
+	private IEnumerable<(HighscoreEntryDto Entry, int Place)> VisibleEntries()
+	{
+		for (var index = 0; index < Math.Min(TopCount, entries.Count); index++)
+		{
+			yield return (entries[index], index + 1);
+		}
+
+		if (ownEntry is not null && ownIndex >= TopCount)
+		{
+			yield return (ownEntry, ownIndex + 1);
+		}
+	}
+}

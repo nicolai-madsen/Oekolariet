@@ -13,80 +13,105 @@
 
 <PageTitle>Sortér affaldet</PageTitle>
 
-<RadzenStack Gap="1rem" Style="max-width: 40rem;">
-	<h1>Sortér affaldet</h1>
+@if (ShowingResult && game is not null)
+{
+	<RadzenStack Gap="1rem" Style="max-width: 40rem; margin: 0 auto;">
+		<QuizResult @key="game.GameId"
+					GameId="@game.GameId"
+					GuestNumber="@game.GuestNumber"
+					GetAvatarUrl="@GetAvatarUrl" />
 
-	@if (currentItem is null)
-	{
-		<h2>Vælg din avatar</h2>
+		<RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+			<RadzenButton Text="Spil igen"
+						  Click="@ShowAvatarSelection"
+						  Style="flex: 1;" />
 
-		<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-			@foreach (var avatar in Avatars)
-			{
-				var isSelected = selectedAvatarKey == avatar.Key;
+			<RadzenButton Text="Tilbage til forsiden"
+						  ButtonStyle="ButtonStyle.Secondary"
+						  Click="@GoToFrontPage"
+						  Style="flex: 1;" />
+		</RadzenStack>
+	</RadzenStack>
+}
 
-				<button @key="avatar.Key"
-						type="button"
-						disabled="@isBusy"
-						aria-pressed="@(isSelected ? "true" : "false")"
-						@onclick="() => SelectAvatar(avatar.Key)"
-						style="padding: 0.5rem; border-radius: 0.75rem; background: white;
-					border: 3px solid @(isSelected ? "#356344" : "#ccc");">
-					<img src="@($"images/Avatars/{avatar.FileName}")"
-						 alt=""
-						 width="80"
-						 height="80"
-						 style="display: block; object-fit: contain;" />
-					<span>@avatar.Name</span>
-				</button>
-			}
+<div hidden="@ShowingResult">
+	<RadzenStack Gap="1rem" Style="max-width: 40rem;">
+		<h1>Sortér affaldet</h1>
+
+		@if (currentItem is null)
+		{
+			<h2>Vælg din avatar</h2>
+
+			<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+				@foreach (var avatar in Avatars)
+				{
+					var isSelected = selectedAvatarKey == avatar.Key;
+
+					<button @key="avatar.Key"
+							type="button"
+							disabled="@isBusy"
+							aria-pressed="@(isSelected ? "true" : "false")"
+							@onclick="() => SelectAvatar(avatar.Key)"
+							style="padding: 0.5rem; border-radius: 0.75rem; background: white;
+						border: 3px solid @(isSelected ? "#356344" : "#ccc");">
+						<img src="@($"images/Avatars/{avatar.FileName}")"
+							 alt=""
+							 width="80"
+							 height="80"
+							 style="display: block; object-fit: contain;" />
+						<span>@avatar.Name</span>
+					</button>
+				}
+			</div>
+
+			<RadzenButton Text="Start spil"
+						  Click="@StartGameAsync"
+						  Disabled="@(isBusy || selectedAvatarKey is null)" />
+		}
+		else if (game is not null)
+		{
+			<QuizCountdown @key="game.GameId"
+						   EndsAtUtc="@game.EndsAtUtc"
+						   OnExpired="@CompleteExpiredGameAsync" />
+
+			<p>Træk genstanden hen til den rigtige spand.</p>
+		}
+
+		@* Keep the same element between items so its pointer handlers stay attached. *@
+		<div @ref="itemElement"
+			 hidden="@(currentItem is null)"
+			 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
+			<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
+				@currentItem?.Name
+			</RadzenCard>
 		</div>
 
-		<RadzenButton Text="Start spil"
-					  Click="@StartGameAsync"
-					  Disabled="@(isBusy || selectedAvatarKey is null)" />
-	}
-	else if (game is not null)
-	{
-		<QuizCountdown @key="game.GameId"
-					   EndsAtUtc="@game.EndsAtUtc"
-					   OnExpired="@CompleteExpiredGameAsync" />
+		@if (currentItem is not null && game is not null)
+		{
+			<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+				@foreach (var category in game.Categories)
+				{
+					<div @key="category.Id" data-bin="@category.Id" style="@BinStyle">
+						<strong>@category.Name</strong>
+					</div>
+				}
+			</RadzenStack>
 
-		<p>Træk genstanden hen til den rigtige spand.</p>
-	}
-	@* Keep the same element between items so its pointer handlers stay attached. *@
-	<div @ref="itemElement"
-		 hidden="@(currentItem is null)"
-		 style="width: fit-content; position: relative; z-index: 1; touch-action: none;">
-		<RadzenCard Style="padding: 1rem 2rem; cursor: grab;">
-			@currentItem?.Name
-		</RadzenCard>
-	</div>
+			<RadzenButton Text="Afbryd spil"
+						  ButtonStyle="ButtonStyle.Secondary"
+						  Click="@GoToFrontPage" />
+		}
 
-	@if (currentItem is not null && game is not null)
-	{
-		<RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-			@foreach (var category in game.Categories)
-			{
-				<div @key="category.Id" data-bin="@category.Id" style="@BinStyle">
-					<strong>@category.Name</strong>
-				</div>
-			}
-		</RadzenStack>
+		<p role="status">@feedback</p>
 
-		<RadzenButton Text="Afbryd spil"
-					  ButtonStyle="ButtonStyle.Secondary"
-					  Click="@AbortGame" />
-	}
-
-	<p role="status">@feedback</p>
-	@if (retryCompletion)
-	{
-		<RadzenButton Text="Prøv igen"
-					  Click="@CompleteExpiredGameAsync"
-					  Disabled="@isBusy" />
-	}
-</RadzenStack>
+		@if (retryCompletion)
+		{
+			<RadzenButton Text="Prøv igen"
+						  Click="@CompleteExpiredGameAsync"
+						  Disabled="@isBusy" />
+		}
+	</RadzenStack>
+</div>
 
 @code {
 	private const string BinStyle =
@@ -119,9 +144,28 @@
 	private bool retryCompletion;
 	private bool disposed;
 
+	private bool ShowingResult => game is not null && currentItem is null;
+
 	private void SelectAvatar(string key)
 	{
 		selectedAvatarKey = key;
+	}
+
+	private string GetAvatarUrl(string avatarKey)
+	{
+		var avatar = Avatars.First(option => option.Key == avatarKey);
+		return $"images/Avatars/{avatar.FileName}";
+	}
+
+	private void ShowAvatarSelection()
+	{
+		game = null;
+		feedback = string.Empty;
+	}
+
+	private void GoToFrontPage()
+	{
+		Navigation.NavigateTo("/");
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -323,9 +367,5 @@
 		{
 			await dragModule.DisposeAsync();
 		}
-	}
-	private void AbortGame()
-	{
-		Navigation.NavigateTo("/");
 	}
 }
