@@ -9,6 +9,7 @@
 @inject HttpClient Http
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <PageTitle>Sortér affaldet</PageTitle>
 
@@ -47,7 +48,9 @@
 	}
 	else if (game is not null)
 	{
-		<QuizCountdown @key="game.GameId" EndsAtUtc="@game.EndsAtUtc" />
+		<QuizCountdown @key="game.GameId"
+					   EndsAtUtc="@game.EndsAtUtc"
+					   OnExpired="@CompleteExpiredGameAsync" />
 
 		<p>Træk genstanden hen til den rigtige spand.</p>
 	}
@@ -70,9 +73,19 @@
 				</div>
 			}
 		</RadzenStack>
+
+		<RadzenButton Text="Afbryd spil"
+					  ButtonStyle="ButtonStyle.Secondary"
+					  Click="@AbortGame" />
 	}
 
 	<p role="status">@feedback</p>
+	@if (retryCompletion)
+	{
+		<RadzenButton Text="Prøv igen"
+					  Click="@CompleteExpiredGameAsync"
+					  Disabled="@isBusy" />
+	}
 </RadzenStack>
 
 @code {
@@ -99,8 +112,12 @@
 	private SortingGameDto? game;
 	private Queue<GuestItemDto> remainingItems = new();
 	private GuestItemDto? currentItem;
-	private bool isBusy;
 	private string feedback = string.Empty;
+
+	private bool isBusy;
+	private bool expiryPending;
+	private bool retryCompletion;
+	private bool disposed;
 
 	private void SelectAvatar(string key)
 	{
@@ -109,23 +126,32 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (firstRender)
+		if (!firstRender)
 		{
-			dragModule = await JS.InvokeAsync<IJSObjectReference>(
-				"import", "./sortingGame.js");
-
-			componentReference = DotNetObjectReference.Create(this);
-
-			await dragModule.InvokeVoidAsync(
-				"enableImmediateDrag", itemElement, componentReference);
+			return;
 		}
+
+		var module = await JS.InvokeAsync<IJSObjectReference>(
+			"import", "./sortingGame.js");
+
+		if (disposed)
+		{
+			await module.DisposeAsync();
+			return;
+		}
+
+		dragModule = module;
+		componentReference = DotNetObjectReference.Create(this);
+
+		await module.InvokeVoidAsync(
+			"enableImmediateDrag", itemElement, componentReference);
 	}
 
 	private async Task StartGameAsync()
 	{
 		var avatarKey = selectedAvatarKey;
 
-		if (isBusy || avatarKey is null)
+		if (disposed || isBusy || avatarKey is null)
 		{
 			return;
 		}
@@ -154,6 +180,8 @@
 			}
 
 			game = sortingGame;
+			expiryPending = false;
+			retryCompletion = false;
 
 			// Shuffle once per round so each item is shown at most once.
 			var items = sortingGame.Items.ToArray();
@@ -177,8 +205,8 @@
 	[JSInvokable]
 	public async Task HandleBinDrop(string bin)
 	{
-		if (isBusy || game is null || currentItem is null ||
-			!Guid.TryParse(bin, out var categoryId))
+		if (disposed || isBusy || retryCompletion || game is null ||
+			currentItem is null || !Guid.TryParse(bin, out var categoryId))
 		{
 			return;
 		}
@@ -194,8 +222,8 @@
 
 			if (response.StatusCode == HttpStatusCode.Conflict)
 			{
-				currentItem = null;
-				feedback = "Tiden er udløbet, eller genstanden er allerede besvaret. Start en ny runde.";
+				// Keep the countdown mounted so it can finish an expired round.
+				feedback = "Svaret kunne ikke registreres.";
 				return;
 			}
 
@@ -232,17 +260,72 @@
 		finally
 		{
 			isBusy = false;
-			await InvokeAsync(StateHasChanged);
+
+			// Let the submitted answer finish before processing a timer expiry.
+			if (expiryPending)
+			{
+				expiryPending = false;
+				await CompleteExpiredGameAsync();
+			}
+
+			if (!disposed)
+			{
+				await InvokeAsync(StateHasChanged);
+			}
+		}
+	}
+
+	private async Task CompleteExpiredGameAsync()
+	{
+		if (disposed || game is null || currentItem is null)
+		{
+			return;
+		}
+
+		if (isBusy)
+		{
+			expiryPending = true;
+			return;
+		}
+
+		isBusy = true;
+		retryCompletion = false;
+
+		try
+		{
+			using var response = await Http.PostAsync(
+				$"api/v1/games/{game.GameId}/complete-expired", null);
+
+			response.EnsureSuccessStatusCode();
+
+			currentItem = null;
+			feedback = "Tiden er gået. Runden er slut.";
+		}
+		catch (HttpRequestException)
+		{
+			retryCompletion = true;
+			feedback = "Runden kunne ikke afsluttes. Prøv igen.";
+		}
+		finally
+		{
+			isBusy = false;
 		}
 	}
 
 	public async ValueTask DisposeAsync()
 	{
+		disposed = true;
+		expiryPending = false;
+
 		componentReference?.Dispose();
 
 		if (dragModule is not null)
 		{
 			await dragModule.DisposeAsync();
 		}
+	}
+	private void AbortGame()
+	{
+		Navigation.NavigateTo("/");
 	}
 }

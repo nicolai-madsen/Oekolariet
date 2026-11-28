@@ -12,8 +12,12 @@
 	[Parameter, EditorRequired]
 	public DateTime EndsAtUtc { get; set; }
 
+	[Parameter]
+	public EventCallback OnExpired { get; set; }
+
 	private readonly PeriodicTimer timer = new(TimeSpan.FromMilliseconds(250));
 	private int remainingSeconds;
+	private bool disposed;
 
 	protected override void OnParametersSet()
 	{
@@ -27,15 +31,25 @@
 			return;
 		}
 
-		while (remainingSeconds > 0 && await timer.WaitForNextTickAsync())
+		while (remainingSeconds > 0)
 		{
-			var seconds = GetRemainingSeconds();
+			// Leaving the quiz disposes the timer and ends the wait.
+			if (!await timer.WaitForNextTickAsync())
+			{
+				return;
+			}
 
+			var seconds = GetRemainingSeconds();
 			if (seconds != remainingSeconds)
 			{
 				remainingSeconds = seconds;
 				StateHasChanged();
 			}
+		}
+
+		if (!disposed)
+		{
+			await OnExpired.InvokeAsync();
 		}
 	}
 
@@ -47,6 +61,7 @@
 
 	public void Dispose()
 	{
+		disposed = true;
 		timer.Dispose();
 	}
 }

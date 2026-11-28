@@ -27,6 +27,12 @@ internal static class GameEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPost("/{gameId:guid}/complete-expired", CompleteExpiredGameAsync)
+            .WithName("CompleteExpiredGame")
+            .AllowAnonymous()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         return builder;
     }
 
@@ -77,5 +83,13 @@ internal static class GameEndpoints
 
         var entries = await handler.HandleAsync(gameId, selectedPeriod.Value, ct);
         return TypedResults.Ok(entries);
+    }
+    private static async Task<NoContent> CompleteExpiredGameAsync(
+    Guid gameId,
+    CompleteExpiredGameHandler handler,
+    CancellationToken ct)
+    {
+        await handler.HandleAsync(gameId, ct);
+        return TypedResults.NoContent();
     }
 }

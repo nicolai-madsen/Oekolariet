@@ -1,10 +1,11 @@
 @exhibitionId = 9b1d5e2a-0c4f-4e7a-9a51-3f1c0e8b0001
-@gameId = 9fa62bf6-5be6-40be-8798-32f52ac61e7e
 # Start the database and run the API in Visual Studio.
 # At the top of this file, add a line like: @baseUrl = https://localhost:7137
 # Use the address shown after "Now listening on" in your API output.
 # Click "Send request" above the request you want to test.
 # When you are done testing, delete the @baseUrl line you added.
+# To test a specific game, copy gameId from the POST /api/v1/games response, add @gameId = <copied ID> at the top of this file, and delete that line after testing.
+
 
 
 
@@ -94,3 +95,6 @@ GET {{baseUrl}}/api/v1/games/{{gameId}}/highscores
 
 ### Månedens highscore
 GET {{baseUrl}}/api/v1/games/{{gameId}}/highscores?period=month
+
+### Guest: complete a round after its timer expires
+POST {{baseUrl}}/api/v1/games/{{gameId}}/complete-expired

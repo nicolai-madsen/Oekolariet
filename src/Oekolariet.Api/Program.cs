@@ -30,6 +30,7 @@ builder.Services.AddScoped<GetDraftHandler>();
 builder.Services.AddScoped<StartGameHandler>();
 builder.Services.AddScoped<SubmitAnswerHandler>();
 builder.Services.AddScoped<GetHighscoresHandler>();
+builder.Services.AddScoped<CompleteExpiredGameHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
