@@ -7,6 +7,7 @@
 # When you are done testing, delete the @baseUrl line you added.
 
 
+
 ### Guest: active version -> 200
 GET {{baseUrl}}/api/v1/exhibitions/{{exhibitionId}}/active-version
 Accept: application/json

@@ -45,11 +45,12 @@
 					  Click="@StartGameAsync"
 					  Disabled="@(isBusy || selectedAvatarKey is null)" />
 	}
-	else
+	else if (game is not null)
 	{
+		<QuizCountdown @key="game.GameId" EndsAtUtc="@game.EndsAtUtc" />
+
 		<p>Træk genstanden hen til den rigtige spand.</p>
 	}
-
 	@* Keep the same element between items so its pointer handlers stay attached. *@
 	<div @ref="itemElement"
 		 hidden="@(currentItem is null)"
