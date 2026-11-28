@@ -1,14 +1,15 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Oekolariet.CmsClient/Oekolariet.CmsClient.csproj" Id="f6859d6e-04b2-44b6-a5f3-28d34aa639b7" />
     <Project Path="src/Oekolariet.Api/Oekolariet.Api.csproj" />
     <Project Path="src/Oekolariet.Application/Oekolariet.Application.csproj" />
+    <Project Path="src/Oekolariet.CmsClient/Oekolariet.CmsClient.csproj" Id="f6859d6e-04b2-44b6-a5f3-28d34aa639b7" />
     <Project Path="src/Oekolariet.Domain/Oekolariet.Domain.csproj" />
     <Project Path="src/Oekolariet.GuestClient/Oekolariet.GuestClient.csproj" />
     <Project Path="src/Oekolariet.Infrastructure/Oekolariet.Infrastructure.csproj" />
     <Project Path="src/Oekolariet.Shared/Oekolariet.Shared.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Oekolariet.Api.Tests/Oekolariet.Api.Tests.csproj" Id="7de74c3b-c7a9-47ef-a670-2f67f5d1d32f" />
     <Project Path="tests/Oekolariet.Application.Tests/Oekolariet.Application.Tests.csproj" />
     <Project Path="tests/Oekolariet.Domain.Tests/Oekolariet.Domain.Tests.csproj" />
   </Folder>
