@@ -21,6 +21,12 @@ internal static class GameEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapGet("/{gameId:guid}/highscores", GetHighscoresAsync)
+            .WithName("GetGameHighscores")
+            .AllowAnonymous()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         return builder;
     }
 
@@ -46,5 +52,30 @@ internal static class GameEndpoints
             ct);
 
         return TypedResults.Ok(result);
+    }
+
+    private static async Task<Results<Ok<List<HighscoreEntryDto>>, ProblemHttpResult>>
+    GetHighscoresAsync(
+        Guid gameId,
+        GetHighscoresHandler handler,
+        CancellationToken ct,
+        string? period = null)
+    {
+        HighscorePeriod? selectedPeriod = period?.ToLowerInvariant() switch
+        {
+            null or "day" => HighscorePeriod.Day,
+            "month" => HighscorePeriod.Month,
+            _ => null
+        };
+
+        if (selectedPeriod is null)
+        {
+            return TypedResults.Problem(
+                detail: "Perioden skal være 'day' eller 'month'.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var entries = await handler.HandleAsync(gameId, selectedPeriod.Value, ct);
+        return TypedResults.Ok(entries);
     }
 }

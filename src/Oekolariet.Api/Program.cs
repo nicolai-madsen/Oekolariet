@@ -29,6 +29,7 @@ builder.Services.AddScoped<GetDraftHandler>();
 // Game services
 builder.Services.AddScoped<StartGameHandler>();
 builder.Services.AddScoped<SubmitAnswerHandler>();
+builder.Services.AddScoped<GetHighscoresHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
